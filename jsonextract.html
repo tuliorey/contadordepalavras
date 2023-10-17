@@ -5,13 +5,35 @@
 </head>
 <body>
     <h1>Extrair Mensagens do JSON</h1>
-    <textarea id="jsonInput" rows="10" cols="50" placeholder='Insira seu JSON aqui (por exemplo: [{"created_at": "2023-10-17", "message": "Primeira mensagem", "subnetwork_id": 1}, {"created_at": "2023-10-17", "message": "Segunda mensagem", "subnetwork_id": 2}]'></textarea><br>
-    <button onclick="extractMessages()">Extrair Mensagens</button><br>
+    <input type="file" id="jsonFile" accept=".json">
+    <br><br>
+    <button onclick="loadJSON()">Carregar JSON</button>
+    <br>
+    <textarea id="jsonInput" rows="10" cols="50" placeholder="O JSON carregado será exibido aqui" readonly></textarea>
+    <br>
+    <button onclick="extractMessages()">Extrair Mensagens</button>
+    <br>
     <p>Mensagens:</p>
     <textarea id="messageOutput" rows="10" cols="50" readonly></textarea>
     <button onclick="copyMessageOutput()">Copiar Mensagens</button>
 
     <script>
+        function loadJSON() {
+            const jsonFile = document.getElementById('jsonFile').files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const jsonContent = event.target.result;
+                document.getElementById('jsonInput').value = jsonContent;
+            };
+
+            if (jsonFile) {
+                reader.readAsText(jsonFile);
+            } else {
+                alert('Por favor, selecione um arquivo JSON.');
+            }
+        }
+
         function extractMessages() {
             const jsonInput = document.getElementById('jsonInput').value;
             const data = JSON.parse(jsonInput);
