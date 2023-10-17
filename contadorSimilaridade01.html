@@ -1,0 +1,129 @@
+<html>
+<head>
+    <title>Similaridade de Frases</title>
+    <style>
+        .bicolor:nth-child(odd) {
+            background-color: white;
+        }
+        .bicolor:nth-child(even) {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Similaridade de Frases</h1>
+    
+    <label for="frases">Insira frases (separadas por linhas):</label>
+    <textarea id="frases" placeholder="Frase 1&#10;Frase 2&#10;Frase 3"></textarea>
+    <button onclick="calcularSimilaridade()">Calcular Similaridade</button>
+    <button onclick="gerarCSV()">Gerar CSV</button>
+    
+    <table id="tabela">
+        <thead>
+            <tr>
+                <th>Grupo</th>
+                <th>Frases</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+        var resultadosCSV = ""; // Variável para armazenar os resultados em CSV
+
+        // Mapeamento de termos para expressões regulares (regex)
+        var variacoesTermos = {
+            "Nota fiscal": /((not(inh)?a|comprova(nte|tivo))s?( fisca(l|i))?|fatura|NF)s?/,
+            "certo": /([cs]e+rt|corret)os?/
+            // Adicione outras variações aqui
+        };
+
+        function calcularSimilaridade() {
+            var inputFrases = document.getElementById("frases").value;
+            var frases = inputFrases.split('\n').map(function(frase) {
+                return frase.trim();
+            });
+
+            var tabela = document.getElementById("tabela").getElementsByTagName('tbody')[0];
+            tabela.innerHTML = "";
+
+            var grupos = [];
+
+            for (var i = 0; i < frases.length; i++) {
+                if (frases[i].length <= 1) {
+                    continue; // Pula mensagens com apenas 1 caractere
+                }
+
+                var encontrouGrupo = false;
+
+                for (var j = 0; j < grupos.length; j++) {
+                    var similaridade = calcularSimilaridadeJaccard(frases[i], grupos[j][0]);
+                    if (similaridade >= 0.22) { // Limite de similaridade definido (25%)
+                        grupos[j].push(frases[i]);
+                        encontrouGrupo = true;
+                        break;
+                    }
+                }
+
+                if (!encontrouGrupo) {
+                    grupos.push([frases[i]]);
+                }
+            }
+
+            grupos = grupos.filter(function(grupo) {
+                return grupo.length > 2; // Filtra grupos com mais de 5 mensagens
+            });
+
+            grupos.sort(function(a, b) {
+                return b.length - a.length; // Ordena em ordem decrescente de quantidade de mensagens
+            });
+
+            grupos.forEach(function(grupo, index) {
+                var row = tabela.insertRow();
+                row.classList.add('bicolor'); // Adiciona a classe bicolor para alternar cores
+                var cell1 = row.insertCell(0);
+                var cell2 = row.insertCell(1);
+
+                cell1.innerHTML = "Grupo " + (index + 1);
+                cell2.innerHTML = grupo.join("<br>");
+
+                // Adiciona os resultados ao CSV
+                resultadosCSV += "Grupo " + (index + 1) + "\n" + grupo.join("\n") + "\n\n";
+            });
+        }
+
+        function gerarCSV() {
+            // Cria um Blob para o arquivo CSV e cria um link de download
+            var blob = new Blob([resultadosCSV], { type: 'text/csv;charset=utf-8;' });
+            var link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "resultados.csv";
+            link.style.display = "none";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function calcularSimilaridadeJaccard(frase1, frase2) {
+            var conjunto1 = new Set(frase1.split(/\s+/));
+            var conjunto2 = new Set(frase2.split(/\s+/));
+
+            // Substitua termos por suas variações equivalentes usando regex
+            for (var termo in variacoesTermos) {
+                if (variacoesTermos[termo].test(frase1)) {
+                    conjunto1.add(termo);
+                }
+                if (variacoesTermos[termo].test(frase2)) {
+                    conjunto2.add(termo);
+                }
+            }
+
+            var intersecao = [...conjunto1].filter(x => conjunto2.has(x));
+            var similaridade = intersecao.length / (conjunto1.size + conjunto2.size - intersecao.length);
+
+            return similaridade;
+        }
+    </script>
+</body>
+</html
