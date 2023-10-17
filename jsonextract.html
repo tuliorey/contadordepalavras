@@ -9,6 +9,7 @@
     <button onclick="extractMessages()">Extrair Mensagens</button><br>
     <p>Mensagens:</p>
     <textarea id="messageOutput" rows="10" cols="50" readonly></textarea>
+    <button onclick="copyMessageOutput()">Copiar Mensagens</button>
 
     <script>
         function extractMessages() {
@@ -25,6 +26,13 @@
             });
 
             messageOutput.value = messages;
+        }
+
+        function copyMessageOutput() {
+            const messageOutput = document.getElementById('messageOutput');
+            messageOutput.select();
+            document.execCommand('copy');
+            alert('Mensagens copiadas para a área de transferência.');
         }
     </script>
 </body>
