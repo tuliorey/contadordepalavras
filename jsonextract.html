@@ -5,11 +5,17 @@
 </head>
 <body>
     <h1>Extrair Mensagens do JSON</h1>
+    <label for="jsonFile">Carregar JSON:</label>
     <input type="file" id="jsonFile" accept=".json">
+    <br><br>
+    <p>OU</p>
+    <label for="pasteJson">Cole o JSON em texto simples:</label>
+    <br>
+    <textarea id="pasteJson" rows="5" cols="50" placeholder="Cole o JSON aqui"></textarea>
     <br><br>
     <button onclick="loadJSON()">Carregar JSON</button>
     <br>
-    <textarea id="jsonInput" rows="10" cols="50" placeholder="O JSON carregado será exibido aqui" readonly></textarea>
+    <textarea id="jsonInput" rows="10" cols="50" placeholder="O JSON carregado ou colado será exibido aqui" readonly></textarea>
     <br>
     <button onclick="extractMessages()">Extrair Mensagens</button>
     <br>
@@ -20,17 +26,22 @@
     <script>
         function loadJSON() {
             const jsonFile = document.getElementById('jsonFile').files[0];
-            const reader = new FileReader();
-
-            reader.onload = function(event) {
-                const jsonContent = event.target.result;
-                document.getElementById('jsonInput').value = jsonContent;
-            };
+            const pasteJson = document.getElementById('pasteJson').value;
+            const jsonInput = document.getElementById('jsonInput');
 
             if (jsonFile) {
+                const reader = new FileReader();
+
+                reader.onload = function(event) {
+                    const jsonContent = event.target.result;
+                    jsonInput.value = jsonContent;
+                };
+
                 reader.readAsText(jsonFile);
+            } else if (pasteJson.trim() !== '') {
+                jsonInput.value = pasteJson;
             } else {
-                alert('Por favor, selecione um arquivo JSON.');
+                alert('Por favor, selecione um arquivo JSON ou cole o conteúdo JSON em texto simples.');
             }
         }
 
