@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html>
 <head>
     <title>Similaridade de Frases</title>
@@ -18,7 +17,7 @@
     <textarea id="frases" placeholder="Frase 1&#10;Frase 2&#10;Frase 3"></textarea>
     <button onclick="calcularSimilaridade()">Calcular Similaridade</button>
     <button onclick="gerarCSV()">Gerar CSV</button>
-    <button onclick="copiarResultado()">Copiar para Área de Transferência</button>
+    <button onclick="copiarResultado()">Copiar Resultado</button>
     
     <table id="tabela">
         <thead>
@@ -50,7 +49,7 @@
             var tabela = document.getElementById("tabela").getElementsByTagName('tbody')[0];
             tabela.innerHTML = "";
 
-            var grupos = {};
+            var grupos = [];
 
             for (var i = 0; i < frases.length; i++) {
                 if (frases[i].length <= 1) {
@@ -59,34 +58,40 @@
 
                 var encontrouGrupo = false;
 
-                for (var grupoNome in grupos) {
-                    var similaridade = calcularSimilaridadeJaccard(frases[i], grupos[grupoNome]);
+                for (var j = 0; j < grupos.length; j++) {
+                    var similaridade = calcularSimilaridadeJaccard(frases[i], grupos[j][0]);
                     if (similaridade >= 0.22) { // Limite de similaridade definido (25%)
-                        grupos[grupoNome] += "<br>" + frases[i];
+                        grupos[j].push(frases[i]);
                         encontrouGrupo = true;
                         break;
                     }
                 }
 
                 if (!encontrouGrupo) {
-                    grupos["Grupo " + (Object.keys(grupos).length + 1)] = frases[i];
+                    grupos.push([frases[i]]);
                 }
             }
 
-            for (var grupoNome in grupos) {
-                var grupoMensagens = grupos[grupoNome];
+            grupos = grupos.filter(function(grupo) {
+                return grupo.length > 2; // Filtra grupos com mais de 5 mensagens
+            });
 
+            grupos.sort(function(a, b) {
+                return b.length - a.length; // Ordena em ordem decrescente de quantidade de mensagens
+            });
+
+            grupos.forEach(function(grupo, index) {
                 var row = tabela.insertRow();
                 row.classList.add('bicolor'); // Adiciona a classe bicolor para alternar cores
                 var cell1 = row.insertCell(0);
                 var cell2 = row.insertCell(1);
 
-                cell1.innerHTML = grupoNome;
-                cell2.innerHTML = grupoMensagens;
+                cell1.innerHTML = "Grupo " + (index + 1);
+                cell2.innerHTML = grupo.join("<br>");
 
                 // Adiciona os resultados ao CSV
-                resultadosCSV += grupoNome + "\n" + grupoMensagens + "\n\n";
-            }
+                resultadosCSV += "Grupo " + (index + 1) + "\n" + grupo.join("\n") + "\n\n";
+            });
         }
 
         function gerarCSV() {
@@ -102,21 +107,13 @@
         }
 
         function copiarResultado() {
-            var tabela = document.getElementById("tabela");
-            var selecao = window.getSelection();
-            var intervalo = document.createRange();
-            intervalo.selectNodeContents(tabela);
-            selecao.removeAllRanges();
-            selecao.addRange(intervalo);
-
-            // Copiar o conteúdo da tabela para a área de transferência
-            document.execCommand('copy');
-
-            // Limpar a seleção
-            selecao.removeAllRanges();
-
-            // Notificar o usuário que o texto foi copiado
-            alert('Resultados copiados para a área de transferência');
+            var resultadoTextArea = document.createElement("textarea");
+            resultadoTextArea.value = resultadosCSV;
+            document.body.appendChild(resultadoTextArea);
+            resultadoTextArea.select();
+            document.execCommand("copy");
+            document.body.removeChild(resultadoTextArea);
+            alert("Resultado copiado para a área de transferência");
         }
 
         function calcularSimilaridadeJaccard(frase1, frase2) {
