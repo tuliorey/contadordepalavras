@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
     <title>Similaridade de Frases</title>
@@ -16,38 +17,20 @@
     <label for="frases">Insira frases (separadas por linhas):</label>
     <textarea id="frases" placeholder="Frase 1&#10;Frase 2&#10;Frase 3"></textarea>
     <button onclick="calcularSimilaridade()">Calcular Similaridade</button>
-    <button onclick="gerarCSV()">Gerar CSV</button>
-    <button onclick="copiarResultado()">Copiar Resultado</button>
     
-    <table id="tabela">
-        <thead>
-            <tr>
-                <th>Grupo</th>
-                <th>Frases</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+    <div id="resultado" style="display: none;">
+        <h2>Resultado da Comparação</h2>
+        <button onclick="copiarResultado()">Copiar para Área de Transferência</button>
+        <div id="tabela">
+        </div>
+    </div>
 
     <script>
-        var resultadosCSV = ""; // Variável para armazenar os resultados em CSV
-
-        // Mapeamento de termos para expressões regulares (regex)
-        var variacoesTermos = {
-            "Nota fiscal": /((not(inh)?a|comprova(nte|tivo))s?( fisca(l|i))?|fatura|NF)s?/,
-            "certo": /([cs]e+rt|corret)os?/
-            // Adicione outras variações aqui
-        };
-
         function calcularSimilaridade() {
             var inputFrases = document.getElementById("frases").value;
             var frases = inputFrases.split('\n').map(function(frase) {
                 return frase.trim();
             });
-
-            var tabela = document.getElementById("tabela").getElementsByTagName('tbody')[0];
-            tabela.innerHTML = "";
 
             var grupos = [];
 
@@ -80,39 +63,24 @@
                 return b.length - a.length; // Ordena em ordem decrescente de quantidade de mensagens
             });
 
+            var tabela = document.getElementById("tabela");
+            tabela.innerHTML = "";
+
             grupos.forEach(function(grupo, index) {
-                var row = tabela.insertRow();
-                row.classList.add('bicolor'); // Adiciona a classe bicolor para alternar cores
-                var cell1 = row.insertCell(0);
-                var cell2 = row.insertCell(1);
-
-                cell1.innerHTML = "Grupo " + (index + 1);
-                cell2.innerHTML = grupo.join("<br>");
-
-                // Adiciona os resultados ao CSV
-                resultadosCSV += "Grupo " + (index + 1) + "\n" + grupo.join("\n") + "\n\n";
+                var grupoDiv = document.createElement("div");
+                grupoDiv.classList.add('bicolor'); // Adiciona a classe bicolor para alternar cores
+                grupoDiv.innerHTML = "<strong>Grupo " + (index + 1) + ":</strong><br>" + grupo.join("<br>");
+                tabela.appendChild(grupoDiv);
             });
-        }
 
-        function gerarCSV() {
-            // Cria um Blob para o arquivo CSV e cria um link de download
-            var blob = new Blob([resultadosCSV], { type: 'text/csv;charset=utf-8;' });
-            var link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "resultados.csv";
-            link.style.display = "none";
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            document.getElementById("resultado").style.display = "block";
         }
 
         function copiarResultado() {
             var resultadoTexto = "";
-            var grupos = document.querySelectorAll("#tabela tbody tr");
+            var grupos = document.querySelectorAll("#tabela div");
             grupos.forEach(function(grupo, index) {
-                var nomeGrupo = grupo.cells[0].innerText;
-                var frases = grupo.cells[1].innerText;
-                resultadoTexto += nomeGrupo + "\n" + frases + "\n\n";
+                resultadoTexto += grupo.innerText + "\n\n";
             });
 
             var resultadoTextArea = document.createElement("textarea");
@@ -127,16 +95,6 @@
         function calcularSimilaridadeJaccard(frase1, frase2) {
             var conjunto1 = new Set(frase1.split(/\s+/));
             var conjunto2 = new Set(frase2.split(/\s+/));
-
-            // Substitua termos por suas variações equivalentes usando regex
-            for (var termo in variacoesTermos) {
-                if (variacoesTermos[termo].test(frase1)) {
-                    conjunto1.add(termo);
-                }
-                if (variacoesTermos[termo].test(frase2)) {
-                    conjunto2.add(termo);
-                }
-            }
 
             var intersecao = [...conjunto1].filter(x => conjunto2.has(x));
             var similaridade = intersecao.length / (conjunto1.size + conjunto2.size - intersecao.length);
