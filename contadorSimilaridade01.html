@@ -101,7 +101,7 @@
             var link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
             link.download = "resultados.csv";
-            link.style.display = "none";
+            link.style display = "none";
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -119,7 +119,7 @@
 
         function calcularSimilaridadeJaccard(frase1, frase2) {
             var conjunto1 = new Set(frase1.split(/\s+/));
-            var conjunto2 = aSet(frase2.split(/\s+/));
+            var conjunto2 = new Set(frase2.split(/\s+/));
 
             // Substitua termos por suas variações equivalentes usando regex
             for (var termo in variacoesTermos) {
