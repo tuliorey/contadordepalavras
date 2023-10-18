@@ -21,8 +21,16 @@
     <div id="resultado" style="display: none;">
         <h2>Resultado da Comparação</h2>
         <button onclick="copiarResultado()">Copiar para Área de Transferência</button>
-        <div id="tabela">
-        </div>
+        <table id="tabela">
+            <thead>
+                <tr>
+                    <th>Grupo</th>
+                    <th>Mensagens</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
     </div>
 
     <script>
@@ -63,14 +71,17 @@
                 return b.length - a.length; // Ordena em ordem decrescente de quantidade de mensagens
             });
 
-            var tabela = document.getElementById("tabela");
+            var tabela = document.getElementById("tabela").getElementsByTagName('tbody')[0];
             tabela.innerHTML = "";
 
             grupos.forEach(function(grupo, index) {
-                var grupoDiv = document.createElement("div");
-                grupoDiv.classList.add('bicolor'); // Adiciona a classe bicolor para alternar cores
-                grupoDiv.innerHTML = "<strong>Grupo " + (index + 1) + ":</strong><br>" + grupo.join("<br>");
-                tabela.appendChild(grupoDiv);
+                var row = tabela.insertRow();
+                row.classList.add('bicolor'); // Adiciona a classe bicolor para alternar cores
+                var cell1 = row.insertCell(0);
+                var cell2 = row.insertCell(1);
+
+                cell1.innerHTML = "Grupo " + (index + 1);
+                cell2.innerHTML = grupo.join("<br>");
             });
 
             document.getElementById("resultado").style.display = "block";
@@ -78,9 +89,11 @@
 
         function copiarResultado() {
             var resultadoTexto = "";
-            var grupos = document.querySelectorAll("#tabela div");
+            var grupos = document.querySelectorAll("#tabela tbody tr");
             grupos.forEach(function(grupo, index) {
-                resultadoTexto += grupo.innerText + "\n\n";
+                var nomeGrupo = grupo.cells[0].innerText;
+                var mensagens = grupo.cells[1].innerText.split("\n").join("<br>");
+                resultadoTexto += nomeGrupo + "\n" + mensagens + "\n\n";
             });
 
             var resultadoTextArea = document.createElement("textarea");
