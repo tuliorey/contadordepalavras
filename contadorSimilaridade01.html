@@ -60,25 +60,21 @@
                 var encontrouGrupo = false;
 
                 for (var j = 0; j < grupos.length; j++) {
-                    var similaridade = calcularSimilaridadeJaccard(frases[i], grupos[j][0]);
+                    var similaridade = calcularSimilaridadeJaccard(frases[i], grupos[j][1]);
                     if (similaridade >= 0.22) { // Limite de similaridade definido (25%)
-                        grupos[j].push(frases[i]);
+                        grupos[j][1] += "<br>" + frases[i];
                         encontrouGrupo = true;
                         break;
                     }
                 }
 
                 if (!encontrouGrupo) {
-                    grupos.push([frases[i]]);
+                    grupos.push(["Grupo " + (grupos.length + 1), frases[i]]);
                 }
             }
 
             grupos = grupos.filter(function(grupo) {
-                return grupo.length > 2; // Filtra grupos com mais de 5 mensagens
-            });
-
-            grupos.sort(function(a, b) {
-                return b.length - a.length; // Ordena em ordem decrescente de quantidade de mensagens
+                return grupo[1].split('<br>').length > 2; // Filtra grupos com mais de 5 mensagens
             });
 
             grupos.forEach(function(grupo, index) {
@@ -87,11 +83,11 @@
                 var cell1 = row.insertCell(0);
                 var cell2 = row.insertCell(1);
 
-                cell1.innerHTML = "Grupo " + (index + 1);
-                cell2.innerHTML = grupo.join("<br>");
+                cell1.innerHTML = grupo[0];
+                cell2.innerHTML = grupo[1];
 
                 // Adiciona os resultados ao CSV
-                resultadosCSV += "Grupo " + (index + 1) + "\n" + grupo.join("\n") + "\n\n";
+                resultadosCSV += grupo[0] + "\n" + grupo[1] + "\n\n";
             });
         }
 
@@ -108,30 +104,22 @@
         }
 
         function copiarResultado() {
-    var tabela = document.getElementById("tabela");
-    var linhas = tabela.getElementsByTagName('tr');
-    var textoCopiado = "";
+            var tabela = document.getElementById("tabela");
+            var selecao = window.getSelection();
+            var intervalo = document.createRange();
+            intervalo.selectNodeContents(tabela);
+            selecao.removeAllRanges();
+            selecao.addRange(intervalo);
 
-    for (var i = 0; i < linhas.length; i++) {
-        var celulas = linhas[i].getElementsByTagName('td');
-        if (celulas.length >= 2) {
-            var grupo = celulas[0].innerHTML; // Coluna do nome/número do grupo
-            var mensagens = celulas[1].innerHTML;
-            mensagens = mensagens.replace(/<br>/g, '\n');
-            textoCopiado += grupo + "\n" + mensagens + "\n\n";
+            // Copiar o conteúdo da tabela para a área de transferência
+            document.execCommand('copy');
+
+            // Limpar a seleção
+            selecao.removeAllRanges();
+
+            // Notificar o usuário que o texto foi copiado
+            alert('Resultados copiados para a área de transferência');
         }
-    }
-
-    var textarea = document.createElement("textarea");
-    textarea.value = textoCopiado;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
-
-    // Notificar o usuário que o texto foi copiado
-    alert('Resultados copiados para a área de transferência');
-}
 
         function calcularSimilaridadeJaccard(frase1, frase2) {
             var conjunto1 = new Set(frase1.split(/\s+/));
@@ -139,7 +127,7 @@
 
             // Substitua termos por suas variações equivalentes usando regex
             for (var termo in variacoesTermos) {
-                if (variacoesTermos[termo].test(frase1)) {
+                                if (variacoesTermos[termo].test(frase1)) {
                     conjunto1.add(termo);
                 }
                 if (variacoesTermos[termo].test(frase2)) {
