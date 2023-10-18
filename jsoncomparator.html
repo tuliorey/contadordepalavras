@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Extrair Mensagens e Comparar Similaridade</title>
+    <title>Comparar Similaridade de Mensagens</title>
     <style>
         .bicolor:nth-child(odd) {
             background-color: white;
@@ -12,7 +12,7 @@
     </style>
 </head>
 <body>
-    <h1>Extrair Mensagens e Comparar Similaridade</h1>
+    <h1>Comparar Similaridade de Mensagens</h1>
     
     <h2>Extrair Mensagens do JSON</h2>
     <label for="jsonFile">Carregar JSON:</label>
@@ -23,16 +23,8 @@
     <br>
     <textarea id="pasteJson" rows="5" cols="50" placeholder="Cole o JSON aqui"></textarea>
     <br><br>
-    <button onclick="loadJSON()">Carregar JSON</button>
-    <br>
-    <textarea id="jsonInput" rows="10" cols="50" placeholder="O JSON carregado ou colado será exibido aqui" readonly></textarea>
-    <br>
     <button onclick="extractMessages()">Extrair Mensagens</button>
-    <br>
-    <p>Mensagens:</p>
-    <textarea id="messageOutput" rows="10" cols="50" readonly></textarea>
-    <button onclick="copyMessageOutput()">Copiar Mensagens</button>
-
+    
     <h2>Comparar Similaridade de Frases</h2>
     <label for="frases">Insira frases (separadas por linhas):</label>
     <textarea id="frases" placeholder="Frase 1&#10;Frase 2&#10;Frase 3"></textarea>
@@ -45,48 +37,41 @@
     </div>
 
     <script>
-        function loadJSON() {
+        function extractMessages() {
             const jsonFile = document.getElementById('jsonFile').files[0];
             const pasteJson = document.getElementById('pasteJson').value;
-            const jsonInput = document.getElementById('jsonInput');
 
             if (jsonFile) {
                 const reader = new FileReader();
 
                 reader.onload = function(event) {
                     const jsonContent = event.target.result;
-                    jsonInput.value = jsonContent;
+                    const data = JSON.parse(jsonContent);
+                    const messages = data.map(item => item.hasOwnProperty('message') ? item.message : '').join('\n');
+                    document.getElementById("frases").value = messages;
+                    document.getElementById("resultado").style.display = "block";
                 };
 
                 reader.readAsText(jsonFile);
             } else if (pasteJson.trim() !== '') {
-                jsonInput.value = pasteJson;
+                const data = JSON.parse(pasteJson);
+                const messages = data.map(item => item.hasOwnProperty('message') ? item.message : '').join('\n');
+                document.getElementById("frases").value = messages;
+                document.getElementById("resultado").style.display = "block";
             } else {
                 alert('Por favor, selecione um arquivo JSON ou cole o conteúdo JSON em texto simples.');
             }
         }
 
-        function extractMessages() {
-            const jsonInput = document.getElementById('jsonInput').value;
-            const data = JSON.parse(jsonInput);
-            const messageOutput = document.getElementById('messageOutput');
-
-            let messages = '';
-
-            data.forEach(item => {
-                if (item.hasOwnProperty('message')) {
-                    messages += item.message + '\n';
-                }
-            });
-
-            messageOutput.value = messages;
-        }
-
-        function copyMessageOutput() {
-            const messageOutput = document.getElementById('messageOutput');
-            messageOutput.select();
-            document.execCommand('copy');
-            alert('Mensagens copiadas para a área de transferência.');
+        function copiarResultado() {
+            var resultadoTexto = document.getElementById("mensagens").innerText;
+            var resultadoTextArea = document.createElement("textarea");
+            resultadoTextArea.value = resultadoTexto;
+            document.body.appendChild(resultadoTextArea);
+            resultadoTextArea.select();
+            document.execCommand("copy");
+            document.body.removeChild(resultadoTextArea);
+            alert("Resultado copiado para a área de transferência");
         }
 
         function calcularSimilaridade() {
@@ -135,17 +120,6 @@
             });
 
             document.getElementById("resultado").style.display = "block";
-        }
-
-        function copiarResultado() {
-            var resultadoTexto = document.getElementById("mensagens").innerText;
-            var resultadoTextArea = document.createElement("textarea");
-            resultadoTextArea.value = resultadoTexto;
-            document.body.appendChild(resultadoTextArea);
-            resultadoTextArea.select();
-            document.execCommand("copy");
-            document.body.removeChild(resultadoTextArea);
-            alert("Resultado copiado para a área de transferência");
         }
 
         function calcularSimilaridadeJaccard(frase1, frase2) {
