@@ -23,7 +23,7 @@
     <br>
     <textarea id="pasteJson" rows="5" cols="50" placeholder="Cole o JSON aqui"></textarea>
     <br><br>
-    <button onclick="extractOrCompare()">Copiar para Área de Transferência</button>
+    <button onclick="extractMessages()">Copiar para Área de Transferência</button>
     
     <h2>Comparar Similaridade de Frases</h2>
     <label for="frases">Insira frases (separadas por linhas):</label>
@@ -36,7 +36,7 @@
     </div>
 
     <script>
-        function extractOrCompare() {
+        function extractMessages() {
             const jsonFile = document.getElementById('jsonFile').files[0];
             const pasteJson = document.getElementById('pasteJson').value;
 
@@ -56,7 +56,7 @@
                 const data = JSON.parse(pasteJson);
                 const messages = data.map(item => item.hasOwnProperty('message') ? item.message : '').join('\n');
                 document.getElementById("frases").value = messages;
-                document.getElementById("resultado").style.display = "block";
+                document.getElementById("resultado").style display = "block";
             } else {
                 alert('Por favor, selecione um arquivo JSON ou cole o conteúdo JSON em texto simples.');
             }
