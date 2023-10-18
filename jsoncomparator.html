@@ -62,11 +62,56 @@
                 alert('Por favor, selecione um arquivo JSON ou cole o conteúdo JSON em texto simples.');
             }
         }
+    function calculateSimilarity() {
+        const inputFrases = document.getElementById("frases").value;
+        const frases = inputFrases.split('\n').map(function(frase) {
+            return frase.trim();
+        });
 
-        function calculateSimilarity() {
-            // Adicione a lógica para calcular a similaridade de frases aqui
-            alert('Função de cálculo de similaridade a ser implementada.');
+        const grupos = [];
+
+        for (let i = 0; i < frases.length; i++) {
+            if (frases[i].length <= 1) {
+                continue; // Pula mensagens com apenas 1 caractere
+            }
+
+            let encontrouGrupo = false;
+
+            for (let j = 0; j < grupos.length; j++) {
+                const similaridade = calcularSimilaridadeJaccard(frases[i], grupos[j][0]);
+                if (similaridade >= 0.22) { // Limite de similaridade definido (25%)
+                    grupos[j].push(frases[i]);
+                    encontrouGrupo = true;
+                    break;
+                }
+            }
+
+            if (!encontrouGrupo) {
+                grupos.push([frases[i]]);
+            }
         }
+
+        const mensagensDiv = document.getElementById("mensagens");
+        mensagensDiv.innerHTML = "";
+
+        grupos.forEach(function(grupo, index) {
+            mensagensDiv.innerHTML += "<strong>Grupo " + (index + 1) + ":</strong>\n";
+            mensagensDiv.innerHTML += grupo.join("\n") + "\n\n";
+        });
+
+        document.getElementById("resultado").style.display = "block";
+    }
+
+    function calcularSimilaridadeJaccard(frase1, frase2) {
+        const conjunto1 = new Set(frase1.split(/\s+/));
+        const conjunto2 = new Set(frase2.split(/\s+/));
+
+        const intersecao = [...conjunto1].filter(x => conjunto2.has(x));
+        const similaridade = intersecao.length / (conjunto1.size + conjunto2.size - intersecao.length);
+
+        return similaridade;
+    }
+
 
         function copiarResultado() {
             var resultadoTexto = document.getElementById("mensagens").innerText;
