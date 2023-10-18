@@ -107,12 +107,16 @@
         }
 
         function copiarResultado() {
-            var resultadoTextArea = document.createElement("textarea");
-            var grupos = Array.from(document.querySelectorAll("#tabela tbody tr")).map(function(row) {
-                var grupo = row.cells[1].innerHTML.split("<br>").join("\n");
-                return "Grupo " + row.cells[0].innerText + "\n" + grupo;
+            var resultadoTexto = "";
+            var grupos = document.querySelectorAll("#tabela tbody tr");
+            grupos.forEach(function(grupo, index) {
+                var nomeGrupo = grupo.cells[0].innerText;
+                var frases = grupo.cells[1].innerText;
+                resultadoTexto += nomeGrupo + "\n" + frases + "\n\n";
             });
-            resultadoTextArea.value = grupos.join("\n\n");
+
+            var resultadoTextArea = document.createElement("textarea");
+            resultadoTextArea.value = resultadoTexto;
             document.body.appendChild(resultadoTextArea);
             resultadoTextArea.select();
             document.execCommand("copy");
