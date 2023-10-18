@@ -115,9 +115,10 @@
     for (var i = 0; i < linhas.length; i++) {
         var celulas = linhas[i].getElementsByTagName('td');
         if (celulas.length >= 2) {
-            var grupo = celulas[1].innerHTML;
-            grupo = grupo.replace(/<br>/g, '\n');
-            textoCopiado += grupo + "\n\n";
+            var grupo = celulas[0].innerHTML; // Coluna do nome/número do grupo
+            var mensagens = celulas[1].innerHTML;
+            mensagens = mensagens.replace(/<br>/g, '\n');
+            textoCopiado += grupo + "\n" + mensagens + "\n\n";
         }
     }
 
@@ -131,6 +132,7 @@
     // Notificar o usuário que o texto foi copiado
     alert('Resultados copiados para a área de transferência');
 }
+
         function calcularSimilaridadeJaccard(frase1, frase2) {
             var conjunto1 = new Set(frase1.split(/\s+/));
             var conjunto2 = new Set(frase2.split(/\s+/));
