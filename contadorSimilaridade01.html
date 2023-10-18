@@ -2,7 +2,6 @@
 <html>
 <head>
     <title>Similaridade de Frases</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.0/xlsx.full.min.js"></script>
     <style>
         .bicolor:nth-child(odd) {
             background-color: white;
@@ -18,10 +17,23 @@
     <label for="frases">Insira frases (separadas por linhas):</label>
     <textarea id="frases" placeholder="Frase 1&#10;Frase 2&#10;Frase 3"></textarea>
     <button onclick="calcularSimilaridade()">Calcular Similaridade</button>
+    <button onclick="gerarCSV()">Gerar CSV</button>
+    <button onclick="copiarTudo()">Copiar Tudo</button>
     
-    <div id="tabelas"></div>
+    <table id="tabela">
+        <thead>
+            <tr>
+                <th>Grupo</th>
+                <th>Frases</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
 
     <script>
+        var resultadosCSV = ""; // Variável para armazenar os resultados em CSV
+
         // Mapeamento de termos para expressões regulares (regex)
         var variacoesTermos = {
             "Nota fiscal": /((not(inh)?a|comprova(nte|tivo))s?( fisca(l|i))?|fatura|NF)s?/,
@@ -34,6 +46,9 @@
             var frases = inputFrases.split('\n').map(function(frase) {
                 return frase.trim();
             });
+
+            var tabela = document.getElementById("tabela").getElementsByTagName('tbody')[0];
+            tabela.innerHTML = "";
 
             var grupos = [];
 
@@ -66,41 +81,45 @@
                 return b.length - a.length; // Ordena em ordem decrescente de quantidade de mensagens
             });
 
-            var tabelasDiv = document.getElementById("tabelas");
-            tabelasDiv.innerHTML = "";
-
             grupos.forEach(function(grupo, index) {
-                var tabela = document.createElement("table");
-                tabela.classList.add('bicolor');
-
-                var thead = tabela.createTHead();
-                var row = thead.insertRow();
+                var row = tabela.insertRow();
+                row.classList.add('bicolor'); // Adiciona a classe bicolor para alternar cores
                 var cell1 = row.insertCell(0);
-                cell1.textContent = "Grupo " + (index + 1);
-                cell1.colSpan = 2;
+                var cell2 = row.insertCell(1);
 
-                grupo.forEach(function(frase) {
-                    var row = tabela.insertRow();
-                    var cell1 = row.insertCell(0);
-                    cell1.textContent = "Frase " + (grupo.indexOf(frase) + 1);
-                    var cell2 = row.insertCell(1);
-                    cell2.textContent = frase;
-                });
+                cell1.innerHTML = "Grupo " + (index + 1);
+                cell2.innerHTML = grupo.join("<br>");
 
-                var copiarBtn = document.createElement("button");
-                copiarBtn.textContent = "Copiar para a Área de Transferência";
-                copiarBtn.addEventListener("click", function() {
-                    copiarParaAreaDeTransferencia(tabela);
-                });
-
-                tabelasDiv.appendChild(tabela);
-                tabelasDiv.appendChild(copiarBtn);
+                // Adiciona os resultados ao CSV
+                resultadosCSV += "Grupo " + (index + 1) + "\n" + grupo.join("\n") + "\n\n";
             });
+        }
+
+        function gerarCSV() {
+            // Cria um Blob para o arquivo CSV e cria um link de download
+            var blob = new Blob([resultadosCSV], { type: 'text/csv;charset=utf-8;' });
+            var link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "resultados.csv";
+            link.style.display = "none";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function copiarTudo() {
+            var tabela = document.getElementById("tabela");
+            var range = document.createRange();
+            range.selectNode(tabela);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand("copy");
+            window.getSelection().removeAllRanges();
         }
 
         function calcularSimilaridadeJaccard(frase1, frase2) {
             var conjunto1 = new Set(frase1.split(/\s+/));
-            var conjunto2 = new Set(frase2.split(/\s+/));
+            var conjunto2 = aSet(frase2.split(/\s+/));
 
             // Substitua termos por suas variações equivalentes usando regex
             for (var termo in variacoesTermos) {
@@ -116,15 +135,6 @@
             var similaridade = intersecao.length / (conjunto1.size + conjunto2.size - intersecao.length);
 
             return similaridade;
-        }
-
-        function copiarParaAreaDeTransferencia(elemento) {
-            var range = document.createRange();
-            range.selectNode(elemento);
-            window.getSelection().removeAllRanges();
-            window.getSelection().addRange(range);
-            document.execCommand("copy");
-            window.getSelection().removeAllRanges();
         }
     </script>
 </body>
