@@ -42,54 +42,58 @@
         };
 
         function calcularSimilaridade() {
-            var inputFrases = document.getElementById("frases").value;
-            var frases = inputFrases.split('\n').map(function(frase) {
-                return frase.trim();
-            });
+    var inputFrases = document.getElementById("frases").value;
+    var frases = inputFrases.split('\n').map(function(frase) {
+        return frase.trim();
+    });
 
-            var tabela = document.getElementById("tabela").getElementsByTagName('tbody')[0];
-            tabela.innerHTML = "";
+    var tabela = document.getElementById("tabela").getElementsByTagName('tbody')[0];
+    tabela.innerHTML = "";
 
-            var grupos = [];
+    var grupos = [];
 
-            for (var i = 0; i < frases.length; i++) {
-                if (frases[i].length <= 1) {
-                    continue; // Pula mensagens com apenas 1 caractere
-                }
-
-                var encontrouGrupo = false;
-
-                for (var j = 0; j < grupos.length; j++) {
-                    var similaridade = calcularSimilaridadeJaccard(frases[i], grupos[j][1]);
-                    if (similaridade >= 0.22) { // Limite de similaridade definido (25%)
-                        grupos[j][1] += "<br>" + frases[i];
-                        encontrouGrupo = true;
-                        break;
-                    }
-                }
-
-                if (!encontrouGrupo) {
-                    grupos.push(["Grupo " + (grupos.length + 1), frases[i]]);
-                }
-            }
-
-            grupos = grupos.filter(function(grupo) {
-                return grupo[1].split('<br>').length > 2; // Filtra grupos com mais de 5 mensagens
-            });
-
-            grupos.forEach(function(grupo, index) {
-                var row = tabela.insertRow();
-                row.classList.add('bicolor'); // Adiciona a classe bicolor para alternar cores
-                var cell1 = row.insertCell(0);
-                var cell2 = row.insertCell(1);
-
-                cell1.innerHTML = grupo[0];
-                cell2.innerHTML = grupo[1];
-
-                // Adiciona os resultados ao CSV
-                resultadosCSV += grupo[0] + "\n" + grupo[1] + "\n\n";
-            });
+    for (var i = 0; i < frases.length; i++) {
+        if (frases[i].length <= 1) {
+            continue; // Pula mensagens com apenas 1 caractere
         }
+
+        var encontrouGrupo = false;
+
+        for (var j = 0; j < grupos.length; j++) {
+            var similaridade = calcularSimilaridadeJaccard(frases[i], grupos[j][1]);
+            if (similaridade >= 0.22) { // Limite de similaridade definido (25%)
+                grupos[j][1] += "<br>" + frases[i];
+                encontrouGrupo = true;
+                break;
+            }
+        }
+
+        if (!encontrouGrupo) {
+            grupos.push(["Grupo " + (grupos.length + 1), frases[i]]);
+        }
+    }
+
+    grupos = grupos.filter(function(grupo) {
+        return grupo[1].split('<br>').length > 2; // Filtra grupos com mais de 5 mensagens
+    });
+
+    grupos.sort(function(a, b) {
+        return b[1].split('<br>').length - a[1].split('<br>').length; // Ordena por quantidade de mensagens
+    });
+
+    grupos.forEach(function(grupo, index) {
+        var row = tabela.insertRow();
+        row.classList.add('bicolor'); // Adiciona a classe bicolor para alternar cores
+        var cell1 = row.insertCell(0);
+        var cell2 = row.insertCell(1);
+
+        cell1.innerHTML = grupo[0];
+        cell2.innerHTML = grupo[1];
+
+        // Adiciona os resultados ao CSV
+        resultadosCSV += grupo[0] + "\n" + grupo[1] + "\n\n";
+    });
+}
 
         function gerarCSV() {
             // Cria um Blob para o arquivo CSV e cria um link de download
