@@ -50,7 +50,7 @@
     var tabela = document.getElementById("tabela").getElementsByTagName('tbody')[0];
     tabela.innerHTML = "";
 
-    var grupos = [];
+    var grupos = {};
 
     for (var i = 0; i < frases.length; i++) {
         if (frases[i].length <= 1) {
@@ -59,14 +59,35 @@
 
         var encontrouGrupo = false;
 
-        for (var j = 0; j < grupos.length; j++) {
-            var similaridade = calcularSimilaridadeJaccard(frases[i], grupos[j][1]);
+        for (var grupoNome in grupos) {
+            var similaridade = calcularSimilaridadeJaccard(frases[i], grupos[grupoNome]);
             if (similaridade >= 0.22) { // Limite de similaridade definido (25%)
-                grupos[j][1] += "<br>" + frases[i];
+                grupos[grupoNome] += "<br>" + frases[i];
                 encontrouGrupo = true;
                 break;
             }
         }
+
+        if (!encontrouGrupo) {
+            grupos["Grupo " + (Object.keys(grupos).length + 1)] = frases[i];
+        }
+    }
+
+    for (var grupoNome in grupos) {
+        var grupoMensagens = grupos[grupoNome];
+
+        var row = tabela.insertRow();
+        row.classList.add('bicolor'); // Adiciona a classe bicolor para alternar cores
+        var cell1 = row.insertCell(0);
+        var cell2 = row.insertCell(1);
+
+        cell1.innerHTML = grupoNome;
+        cell2.innerHTML = grupoMensagens;
+
+        // Adiciona os resultados ao CSV
+        resultadosCSV += grupoNome + "\n" + grupoMensagens + "\n\n";
+    }
+}
 
         if (!encontrouGrupo) {
             grupos.push(["Grupo " + (grupos.length + 1), frases[i]]);
