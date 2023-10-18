@@ -90,7 +90,7 @@
                 cell2.innerHTML = grupo.join("<br>");
 
                 // Adiciona os resultados ao CSV
-                resultadosCSV += "Grupo " + (index + 1) + "\n" + grupo.join("<br>") + "\n\n";
+                resultadosCSV += "Grupo " + (index + 1) + "\n" + grupo.join("\n") + "\n\n";
             });
         }
 
@@ -108,7 +108,11 @@
 
         function copiarResultado() {
             var resultadoTextArea = document.createElement("textarea");
-            resultadoTextArea.value = resultadosCSV;
+            var grupos = Array.from(document.querySelectorAll("#tabela tbody tr")).map(function(row) {
+                var grupo = row.cells[1].innerHTML.split("<br>").join("\n");
+                return "Grupo " + row.cells[0].innerText + "\n" + grupo;
+            });
+            resultadoTextArea.value = grupos.join("\n\n");
             document.body.appendChild(resultadoTextArea);
             resultadoTextArea.select();
             document.execCommand("copy");
