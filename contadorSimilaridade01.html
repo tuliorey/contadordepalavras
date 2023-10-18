@@ -18,7 +18,7 @@
     <textarea id="frases" placeholder="Frase 1&#10;Frase 2&#10;Frase 3"></textarea>
     <button onclick="calcularSimilaridade()">Calcular Similaridade</button>
     <button onclick="gerarCSV()">Gerar CSV</button>
-    <button onclick="copiarTudo()">Copiar Tudo</button>
+    <button onclick="copiarResultado()">Copiar para Área de Transferência</button>
     
     <table id="tabela">
         <thead>
@@ -101,20 +101,28 @@
             var link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
             link.download = "resultados.csv";
-            link.style display = "none";
+            link.style.display = "none";
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
 
-        function copiarTudo() {
+        function copiarResultado() {
             var tabela = document.getElementById("tabela");
-            var range = document.createRange();
-            range.selectNode(tabela);
-            window.getSelection().removeAllRanges();
-            window.getSelection().addRange(range);
-            document.execCommand("copy");
-            window.getSelection().removeAllRanges();
+            var selecao = window.getSelection();
+            var intervalo = document.createRange();
+            intervalo.selectNodeContents(tabela);
+            selecao.removeAllRanges();
+            selecao.addRange(intervalo);
+
+            // Copiar o conteúdo da tabela para a área de transferência
+            document.execCommand('copy');
+
+            // Limpar a seleção
+            selecao.removeAllRanges();
+
+            // Notificar o usuário que o texto foi copiado
+            alert('Resultados copiados para a área de transferência');
         }
 
         function calcularSimilaridadeJaccard(frase1, frase2) {
