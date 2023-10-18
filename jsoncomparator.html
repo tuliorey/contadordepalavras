@@ -23,7 +23,7 @@
     <br>
     <textarea id="pasteJson" rows="5" cols="50" placeholder="Cole o JSON aqui"></textarea>
     <br><br>
-    <button onclick="calcularSimilaridade()">Comparar Similaridade</button>
+    <button onclick="extractOrCompare()">Copiar para Área de Transferência</button>
     
     <h2>Comparar Similaridade de Frases</h2>
     <label for="frases">Insira frases (separadas por linhas):</label>
@@ -36,7 +36,7 @@
     </div>
 
     <script>
-        function calcularSimilaridade() {
+        function extractOrCompare() {
             const jsonFile = document.getElementById('jsonFile').files[0];
             const pasteJson = document.getElementById('pasteJson').value;
 
