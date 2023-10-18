@@ -23,12 +23,12 @@
     <br>
     <textarea id="pasteJson" rows="5" cols="50" placeholder="Cole o JSON aqui"></textarea>
     <br><br>
-    <button onclick="calcularSimilaridade()">Calcular Similaridade</button>
+    <button onclick="extractMessages()">Extrair Mensagens</button>
+    <button onclick="copyMessages()">Copiar Mensagens</button>
     
     <h2>Comparar Similaridade de Frases</h2>
     <label for="frases">Insira frases (separadas por linhas):</label>
     <textarea id="frases" placeholder="Frase 1&#10;Frase 2&#10;Frase 3"></textarea>
-    <button onclick="calcularSimilaridade()">Calcular Similaridade</button>
     
     <div id="resultado" style="display: none;">
         <h3>Resultado da Comparação</h3>
@@ -37,7 +37,7 @@
     </div>
 
     <script>
-        function calcularSimilaridade() {
+        function extractMessages() {
             const jsonFile = document.getElementById('jsonFile').files[0];
             const pasteJson = document.getElementById('pasteJson').value;
 
@@ -63,6 +63,17 @@
             }
         }
 
+        function copyMessages() {
+            var messages = document.getElementById("frases").value;
+            var messagesTextArea = document.createElement("textarea");
+            messagesTextArea.value = messages;
+            document.body.appendChild(messagesTextArea);
+            messagesTextArea.select();
+            document.execCommand("copy");
+            document.body.removeChild(messagesTextArea);
+            alert("Mensagens copiadas para a área de transferência.");
+        }
+
         function copiarResultado() {
             var resultadoTexto = document.getElementById("mensagens").innerText;
             var resultadoTextArea = document.createElement("textarea");
@@ -72,64 +83,6 @@
             document.execCommand("copy");
             document.body.removeChild(resultadoTextArea);
             alert("Resultado copiado para a área de transferência");
-        }
-
-        function calcularSimilaridade() {
-            var inputFrases = document.getElementById("frases").value;
-            var frases = inputFrases.split('\n').map(function(frase) {
-                return frase.trim();
-            });
-
-            var grupos = [];
-
-            for (var i = 0; i < frases.length; i++) {
-                if (frases[i].length <= 1) {
-                    continue; // Pula mensagens com apenas 1 caractere
-                }
-
-                var encontrouGrupo = false;
-
-                for (var j = 0; j < grupos.length; j++) {
-                    var similaridade = calcularSimilaridadeJaccard(frases[i], grupos[j][0]);
-                    if (similaridade >= 0.22) { // Limite de similaridade definido (25%)
-                        grupos[j].push(frases[i]);
-                        encontrouGrupo = true;
-                        break;
-                    }
-                }
-
-                if (!encontrouGrupo) {
-                    grupos.push([frases[i]]);
-                }
-            }
-
-            grupos = grupos.filter(function(grupo) {
-                return grupo.length > 2; // Filtra grupos com mais de 5 mensagens
-            });
-
-            grupos.sort(function(a, b) {
-                return b.length - a.length; // Ordena em ordem decrescente de quantidade de mensagens
-            });
-
-            var mensagensDiv = document.getElementById("mensagens");
-            mensagensDiv.innerHTML = "";
-
-            grupos.forEach(function(grupo, index) {
-                mensagensDiv.innerHTML += "<strong>Grupo " + (index + 1) + ":</strong>\n";
-                mensagensDiv.innerHTML += grupo.join("\n") + "\n\n";
-            });
-
-            document.getElementById("resultado").style.display = "block";
-        }
-
-        function calcularSimilaridadeJaccard(frase1, frase2) {
-            var conjunto1 = new Set(frase1.split(/\s+/));
-            var conjunto2 = new Set(frase2.split(/\s+/));
-
-            var intersecao = [...conjunto1].filter(x => conjunto2.has(x));
-            var similaridade = intersecao.length / (conjunto1.size + conjunto2.size - intersecao.length);
-
-            return similaridade;
         }
     </script>
 </body>
