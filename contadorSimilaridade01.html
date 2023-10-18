@@ -21,16 +21,7 @@
     <div id="resultado" style="display: none;">
         <h2>Resultado da Comparação</h2>
         <button onclick="copiarResultado()">Copiar para Área de Transferência</button>
-        <table id="tabela">
-            <thead>
-                <tr>
-                    <th>Grupo</th>
-                    <th>Mensagens</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+        <div id="mensagens" style="white-space: pre-line;"></div>
     </div>
 
     <script>
@@ -71,31 +62,19 @@
                 return b.length - a.length; // Ordena em ordem decrescente de quantidade de mensagens
             });
 
-            var tabela = document.getElementById("tabela").getElementsByTagName('tbody')[0];
-            tabela.innerHTML = "";
+            var mensagensDiv = document.getElementById("mensagens");
+            mensagensDiv.innerHTML = "";
 
             grupos.forEach(function(grupo, index) {
-                var row = tabela.insertRow();
-                row.classList.add('bicolor'); // Adiciona a classe bicolor para alternar cores
-                var cell1 = row.insertCell(0);
-                var cell2 = row.insertCell(1);
-
-                cell1.innerHTML = "Grupo " + (index + 1);
-                cell2.innerHTML = grupo.join("\n");
+                mensagensDiv.innerHTML += "<strong>Grupo " + (index + 1) + ":</strong>\n";
+                mensagensDiv.innerHTML += grupo.join("\n") + "\n\n";
             });
 
             document.getElementById("resultado").style.display = "block";
         }
 
         function copiarResultado() {
-            var tabela = document.getElementById("tabela");
-            var resultadoTexto = "";
-            for (var i = 0; i < tabela.rows.length; i++) {
-                var grupo = tabela.rows[i].cells[0].innerText;
-                var mensagens = tabela.rows[i].cells[1].innerText;
-                resultadoTexto += grupo + "\n" + mensagens + "\n\n";
-            }
-
+            var resultadoTexto = document.getElementById("mensagens").innerText;
             var resultadoTextArea = document.createElement("textarea");
             resultadoTextArea.value = resultadoTexto;
             document.body.appendChild(resultadoTextArea);
