@@ -81,20 +81,20 @@
                 var cell2 = row.insertCell(1);
 
                 cell1.innerHTML = "Grupo " + (index + 1);
-                cell2.innerHTML = grupo.join("<br>");
+                cell2.innerHTML = grupo.join("\n");
             });
 
             document.getElementById("resultado").style.display = "block";
         }
 
         function copiarResultado() {
+            var tabela = document.getElementById("tabela");
             var resultadoTexto = "";
-            var grupos = document.querySelectorAll("#tabela tbody tr");
-            grupos.forEach(function(grupo, index) {
-                var nomeGrupo = grupo.cells[0].innerText;
-                var mensagens = grupo.cells[1].innerText.split("\n").join("<br>");
-                resultadoTexto += nomeGrupo + "\n" + mensagens + "\n\n";
-            });
+            for (var i = 0; i < tabela.rows.length; i++) {
+                var grupo = tabela.rows[i].cells[0].innerText;
+                var mensagens = tabela.rows[i].cells[1].innerText;
+                resultadoTexto += grupo + "\n" + mensagens + "\n\n";
+            }
 
             var resultadoTextArea = document.createElement("textarea");
             resultadoTextArea.value = resultadoTexto;
