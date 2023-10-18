@@ -108,23 +108,29 @@
         }
 
         function copiarResultado() {
-            var tabela = document.getElementById("tabela");
-            var selecao = window.getSelection();
-            var intervalo = document.createRange();
-            intervalo.selectNodeContents(tabela);
-            selecao.removeAllRanges();
-            selecao.addRange(intervalo);
+    var tabela = document.getElementById("tabela");
+    var linhas = tabela.getElementsByTagName('tr');
+    var textoCopiado = "";
 
-            // Copiar o conteúdo da tabela para a área de transferência
-            document.execCommand('copy');
-
-            // Limpar a seleção
-            selecao.removeAllRanges();
-
-            // Notificar o usuário que o texto foi copiado
-            alert('Resultados copiados para a área de transferência');
+    for (var i = 0; i < linhas.length; i++) {
+        var celulas = linhas[i].getElementsByTagName('td');
+        if (celulas.length >= 2) {
+            var grupo = celulas[1].innerHTML;
+            grupo = grupo.replace(/<br>/g, '\n');
+            textoCopiado += grupo + "\n\n";
         }
+    }
 
+    var textarea = document.createElement("textarea");
+    textarea.value = textoCopiado;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+
+    // Notificar o usuário que o texto foi copiado
+    alert('Resultados copiados para a área de transferência');
+}
         function calcularSimilaridadeJaccard(frase1, frase2) {
             var conjunto1 = new Set(frase1.split(/\s+/));
             var conjunto2 = new Set(frase2.split(/\s+/));
