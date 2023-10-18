@@ -18,22 +18,10 @@
     <label for="frases">Insira frases (separadas por linhas):</label>
     <textarea id="frases" placeholder="Frase 1&#10;Frase 2&#10;Frase 3"></textarea>
     <button onclick="calcularSimilaridade()">Calcular Similaridade</button>
-    <button onclick="gerarPlanilha()">Gerar Planilha</button>
     
-    <table id="tabela">
-        <thead>
-            <tr>
-                <th>Grupo</th>
-                <th>Frases</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+    <div id="tabelas"></div>
 
     <script>
-        var resultadosPlanilha = []; // Variável para armazenar os resultados em uma planilha
-
         // Mapeamento de termos para expressões regulares (regex)
         var variacoesTermos = {
             "Nota fiscal": /((not(inh)?a|comprova(nte|tivo))s?( fisca(l|i))?|fatura|NF)s?/,
@@ -46,9 +34,6 @@
             var frases = inputFrases.split('\n').map(function(frase) {
                 return frase.trim();
             });
-
-            var tabela = document.getElementById("tabela").getElementsByTagName('tbody')[0];
-            tabela.innerHTML = "";
 
             var grupos = [];
 
@@ -81,29 +66,36 @@
                 return b.length - a.length; // Ordena em ordem decrescente de quantidade de mensagens
             });
 
+            var tabelasDiv = document.getElementById("tabelas");
+            tabelasDiv.innerHTML = "";
+
             grupos.forEach(function(grupo, index) {
-                var row = tabela.insertRow();
-                row.classList.add('bicolor'); // Adiciona a classe bicolor para alternar cores
+                var tabela = document.createElement("table");
+                tabela.classList.add('bicolor');
+
+                var thead = tabela.createTHead();
+                var row = thead.insertRow();
                 var cell1 = row.insertCell(0);
-                var cell2 = row.insertCell(1);
+                cell1.textContent = "Grupo " + (index + 1);
+                cell1.colSpan = 2;
 
-                cell1.innerHTML = "Grupo " + (index + 1);
-                cell2.innerHTML = grupo.join("<br>");
+                grupo.forEach(function(frase) {
+                    var row = tabela.insertRow();
+                    var cell1 = row.insertCell(0);
+                    cell1.textContent = "Frase " + (grupo.indexOf(frase) + 1);
+                    var cell2 = row.insertCell(1);
+                    cell2.textContent = frase;
+                });
 
-                // Adiciona os resultados ao array da planilha
-                resultadosPlanilha.push(["Grupo " + (index + 1)].concat(grupo));
+                var copiarBtn = document.createElement("button");
+                copiarBtn.textContent = "Copiar para a Área de Transferência";
+                copiarBtn.addEventListener("click", function() {
+                    copiarParaAreaDeTransferencia(tabela);
+                });
+
+                tabelasDiv.appendChild(tabela);
+                tabelasDiv.appendChild(copiarBtn);
             });
-        }
-
-        function gerarPlanilha() {
-            // Criar uma planilha XLSX usando a biblioteca XLSX
-            var wb = XLSX.utils.book_new();
-            var ws = XLSX.utils.aoa_to_sheet(resultadosPlanilha);
-
-            XLSX.utils.book_append_sheet(wb, ws, "Resultados");
-
-            // Gere o arquivo XLSX e faça o download
-            XLSX.writeFile(wb, "resultados.xlsx");
         }
 
         function calcularSimilaridadeJaccard(frase1, frase2) {
@@ -124,6 +116,15 @@
             var similaridade = intersecao.length / (conjunto1.size + conjunto2.size - intersecao.length);
 
             return similaridade;
+        }
+
+        function copiarParaAreaDeTransferencia(elemento) {
+            var range = document.createRange();
+            range.selectNode(elemento);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand("copy");
+            window.getSelection().removeAllRanges();
         }
     </script>
 </body>
