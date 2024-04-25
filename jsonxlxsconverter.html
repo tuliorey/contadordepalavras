@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conversor de JSON em XLSX</title>
+</head>
+<body>
+  <input type="file" id="fileInput">
+  <button onclick="convertAndDownload()">Convert and Download</button>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.0/xlsx.full.min.js"></script>
+  <script>
+    function convertAndDownload() {
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const jsonData = JSON.parse(event.target.result);
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(jsonData);
+        XLSX.utils.book_append_sheet(wb, ws, "Dados");
+
+        XLSX.writeFile(wb, "dados.xlsx", { bookType: 'xlsx', type: 'file' });
+      };
+
+      reader.readAsText(file);
+    }
+  </script>
+</body>
+</html>
