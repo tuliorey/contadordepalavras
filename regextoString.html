@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerador de Strings a partir de Regex</title>
+</head>
+<body>
+    <h1>Gerador de Strings a partir de Regex</h1>
+    <label for="regex">Regex:</label>
+    <input type="text" id="regex" placeholder="Insira a regex aqui">
+    <label for="separador">Separador:</label>
+    <select id="separador">
+        <option value="virgula">Vírgula ( , )</option>
+        <option value="linha">Quebra de linha ( \\n )</option>
+    </select>
+    <button onclick="gerarStrings()">Gerar Strings</button>
+    <pre id="resultado"></pre>
+    <script src="regextoString.js"></script>
+</body>
+</html>
