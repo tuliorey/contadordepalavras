@@ -33,11 +33,23 @@
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
 
-                // Converter planilha para JSON
-                const json = XLSX.utils.sheet_to_json(worksheet);
+                // Obter os cabeçalhos
+                const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                // Transformar a matriz em um objeto JSON estruturado
+                const headers = json[0];
+                const rows = json.slice(1);
+
+                const result = rows.map(row => {
+                    const obj = {};
+                    headers.forEach((header, index) => {
+                        obj[header] = row[index];
+                    });
+                    return obj;
+                });
 
                 // Exibir o JSON
-                output.textContent = JSON.stringify(json, null, 2);
+                output.textContent = JSON.stringify(result, null, 2);
             };
 
             reader.readAsArrayBuffer(file);
