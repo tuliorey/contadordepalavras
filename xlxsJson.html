@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Converter XLSX para JSON</title>
+    <script src="xlsx.full.min.js"></script>
+</head>
+<body>
+    <h1>Converter XLSX para JSON</h1>
+    <input type="file" id="inputFile" accept=".xlsx,.xls" />
+    <button onclick="convertToJSON()">Converter</button>
+    <pre id="output"></pre>
+
+    <script>
+        function convertToJSON() {
+            const input = document.getElementById('inputFile');
+            const output = document.getElementById('output');
+
+            if (!input.files || !input.files[0]) {
+                alert("Por favor, selecione um arquivo!");
+                return;
+            }
+
+            const file = input.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+
+                // Supondo que a primeira planilha é a de interesse
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+
+                // Converter planilha para JSON
+                const json = XLSX.utils.sheet_to_json(worksheet);
+
+                // Exibir o JSON
+                output.textContent = JSON.stringify(json, null, 2);
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+    </script>
+</body>
+</html>
