@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Script JS</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        textarea, input { width: 100%; margin-top: 5px; padding: 10px; font-size: 16px; }
+        button { margin-top: 10px; padding: 10px; font-size: 16px; cursor: pointer; }
+        pre { background: #f4f4f4; padding: 10px; white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+
+    <h2>Gerador de Script JS</h2>
+    
+    <label for="tempo">Tempo entre mensagens (ms):</label>
+    <input type="number" id="tempo" value="20000">
+
+    <label for="mensagens">Mensagens (uma por linha):</label>
+    <textarea id="mensagens" rows="5">Olá, tudo bem?
+Essa é uma mensagem automática.
+Espero que esteja tendo um ótimo dia!</textarea>
+
+    <button onclick="gerarScript()">Gerar Código</button>
+    <button onclick="copiarCodigo()">Copiar Código</button>
+
+    <h3>Script Gerado:</h3>
+    <pre id="codigoGerado"></pre>
+
+    <script>
+        function gerarScript() {
+            let tempoEnvio = document.getElementById("tempo").value;
+            let mensagens = document.getElementById("mensagens").value.trim().split("\n").map(m => m.trim()).filter(m => m !== "");
+
+            let scriptJS = `
+async function enviarScript(scriptText){
+    const lines = scriptText.split(/[\\n\\t]+/).map(line => line.trim()).filter(line => line);
+    main = document.querySelector("#main"),
+    textarea = main.querySelector(\`div[contenteditable="true"]\`);
+    
+    if(!textarea) throw new Error("Não há uma conversa aberta");
+    
+    for(const line of lines){
+        console.log(line);
+        textarea.focus();
+        document.execCommand('insertText', false, line);
+        textarea.dispatchEvent(new Event('change', {bubbles: true}));
+
+        setTimeout(() => {
+            (main.querySelector(\`[data-testid="send"]\`) || main.querySelector(\`[data-icon="send"]\`)).click();
+        }, 100);
+
+        if(lines.indexOf(line) !== lines.length - 1) 
+            await new Promise(resolve => setTimeout(resolve, ${tempoEnvio}));
+    }
+    return lines.length;
+}
+
+enviarScript(\`
+${mensagens.join("\n")}
+\`).then(e => console.log(\`Código finalizado, \${e} mensagens enviadas\`)).catch(console.error);
+            `;
+
+            document.getElementById("codigoGerado").textContent = scriptJS;
+        }
+
+        function copiarCodigo() {
+            let codigo = document.getElementById("codigoGerado").textContent;
+            navigator.clipboard.writeText(codigo);
+            alert("Código copiado!");
+        }
+    </script>
+
+</body>
+</html>
