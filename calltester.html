@@ -20,7 +20,7 @@
 
     <label for="mensagens">Mensagens (uma por linha):</label>
     <textarea id="mensagens" rows="5">Olá, tudo bem?
-Essa é uma mensagem automática.
+Essa é uma "mensagem automática".
 Espero que esteja tendo um ótimo dia!</textarea>
 
     <button onclick="gerarScript()">Gerar Código</button>
@@ -32,7 +32,11 @@ Espero que esteja tendo um ótimo dia!</textarea>
     <script>
         function gerarScript() {
             let tempoEnvio = document.getElementById("tempo").value;
-            let mensagens = document.getElementById("mensagens").value.trim().split("\n").map(m => m.trim()).filter(m => m !== "");
+            let mensagens = document.getElementById("mensagens").value
+                .trim()
+                .split("\n")
+                .map(m => m.trim().replace(/"/g, "")) // Remove apenas aspas duplas, mantém apóstrofos
+                .filter(m => m !== "");
 
             let scriptJS = `
 async function enviarScript(scriptText){
