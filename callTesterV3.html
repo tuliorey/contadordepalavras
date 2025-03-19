@@ -41,12 +41,17 @@ Espero que esteja tendo um ótimo dia!</textarea>
             let mensagens = document.getElementById("mensagens").value
                 .trim()
                 .split("\n")
-                .map(m => m.trim().replace(/"/g, ""))
+                .map(m => m.trim())
                 .filter(m => m !== "");
 
+            if (mensagens.length === 0) {
+                document.getElementById("codigoGerado").textContent = "Erro: Nenhuma mensagem inserida.";
+                return;
+            }
+
             let scriptJS = `
-async function enviarScript(scriptText) {
-    const lines = scriptText.split(/[\n\t]+/).map(line => line.trim()).filter(line => line);
+(async function enviarScript() {
+    const lines = ${JSON.stringify(mensagens)};
     const main = document.querySelector("#main");
     if (!main) throw new Error("Elemento principal não encontrado");
     const textarea = main.querySelector('div[contenteditable="true"]');
@@ -70,32 +75,6 @@ async function enviarScript(scriptText) {
         return true;
     }
 
-    function contarMensagensRecebidas() {
-        const mensagens = document.querySelectorAll('.message-in');
-        return mensagens.length;
-    }
-
-    async function esperarResposta() {
-        return new Promise(resolve => {
-            const contagemInicial = contarMensagensRecebidas();
-            console.log(":mag: Esperando resposta... (Contagem atual: \${contagemInicial})");
-            const intervalo = setInterval(() => {
-                const contagemAtual = contarMensagensRecebidas();
-                if (contagemAtual > contagemInicial) {
-                    console.log(":white_check_mark: Nova resposta detectada! (\${contagemAtual} > \${contagemInicial})");
-                    clearInterval(intervalo);
-                    clearTimeout(timeout);
-                    resolve(true);
-                }
-            }, 1000);
-            const timeout = setTimeout(() => {
-                console.log(":warning: Timeout de 3 minutos atingido. Continuando sem resposta.");
-                clearInterval(intervalo);
-                resolve(false);
-            }, 3 * 60 * 1000);
-        });
-    }
-
     for (let i = 0; i < lines.length; i++) {
         const mensagem = lines[i];
         const enviado = await enviarMensagem(mensagem);
@@ -104,29 +83,21 @@ async function enviarScript(scriptText) {
             break;
         }
         if (i < lines.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            await esperarResposta();
-            console.log(":stopwatch: Aguardando 5 segundos antes da próxima mensagem...");
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            await new Promise(resolve => setTimeout(resolve, ${tempoEnvio}));
         }
     }
     console.log(":tada: Todas as mensagens foram processadas!");
-    return lines.length;
-}
-
-enviarScript(`
-${mensagens.join("\n")}
-`).then(total => {
-    console.log(":sparkles: Script finalizado! \${total} mensagens foram enviadas.");
-}).catch(erro => {
-    console.error(":x: Erro durante a execução: ", erro.message);
-});
+})();
             `;
             document.getElementById("codigoGerado").textContent = scriptJS;
         }
 
         function copiarCodigo() {
             let codigo = document.getElementById("codigoGerado").textContent;
+            if (!codigo.trim()) {
+                alert("Nenhum código gerado para copiar.");
+                return;
+            }
             navigator.clipboard.writeText(codigo);
             alert("Código copiado!");
         }
