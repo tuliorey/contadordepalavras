@@ -51,7 +51,7 @@ Espero que esteja tendo um ótimo dia!</textarea>
 
             let scriptJS = `
 async function enviarScript(scriptText) {
-    const lines = scriptText.split(/[\n\t]+/).map(line => line.trim()).filter(line => line);
+    const lines = scriptText.split(/[\\n\\t]+/).map(line => line.trim()).filter(line => line);
     
     const main = document.querySelector("#main");
     if (!main) throw new Error("Elemento principal não encontrado");
