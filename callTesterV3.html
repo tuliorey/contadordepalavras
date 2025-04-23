@@ -50,44 +50,89 @@ Espero que esteja tendo um ótimo dia!</textarea>
             }
 
             let scriptJS = `
-(async function enviarScript() {
-    const lines = ${JSON.stringify(mensagens)};
+async function enviarScript(scriptText) {
+    const lines = scriptText.split(/[\n\t]+/).map(line => line.trim()).filter(line => line);
+    
     const main = document.querySelector("#main");
     if (!main) throw new Error("Elemento principal não encontrado");
+    
     const textarea = main.querySelector('div[contenteditable="true"]');
     if (!textarea) throw new Error("Campo de texto não encontrado");
-
-    console.log(":rocket: Iniciando envio de \${lines.length} mensagens...");
-
+    
+    console.log(\`:rocket: Iniciando envio de \${lines.length} mensagens...\`);
+    
     async function enviarMensagem(texto) {
-        console.log(":outbox_tray: Enviando: \"\${texto}\"");
+        console.log(\`:outbox_tray: Enviando: "\${texto}"\`);
         textarea.focus();
         document.execCommand('insertText', false, texto);
         textarea.dispatchEvent(new Event('change', {bubbles: true}));
         await new Promise(resolve => setTimeout(resolve, 500));
+        
         const botaoEnviar = main.querySelector('[data-icon="send"]') || main.querySelector('[data-testid="send"]');
         if (!botaoEnviar) {
-            console.error(":x: Botão de enviar não encontrado!");
+            console.error(\`:x: Botão de enviar não encontrado!\`);
             return false;
         }
+        
         botaoEnviar.click();
-        console.log("✓ Mensagem enviada com sucesso!");
+        console.log(\`✓ Mensagem enviada com sucesso!\`);
         return true;
     }
-
+    
+    function contarMensagensRecebidas() {
+        const mensagens = document.querySelectorAll('.message-in');
+        return mensagens.length;
+    }
+    
+    async function esperarResposta() {
+        return new Promise(resolve => {
+            const contagemInicial = contarMensagensRecebidas();
+            console.log(\`:mag: Esperando resposta... (Contagem atual: \${contagemInicial})\`);
+            
+            const intervalo = setInterval(() => {
+                const contagemAtual = contarMensagensRecebidas();
+                
+                if (contagemAtual > contagemInicial) {
+                    console.log(\`:white_check_mark: Nova resposta detectada! (\${contagemAtual} > \${contagemInicial})\`);
+                    clearInterval(intervalo);
+                    clearTimeout(timeout);
+                    resolve(true);
+                }
+            }, 1000);
+            
+            const timeout = setTimeout(() => {
+                console.log(\`:warning: Timeout de 3 minutos atingido. Continuando sem resposta.\`);
+                clearInterval(intervalo);
+                resolve(false);
+            }, 3 * 60 * 1000);
+        });
+    }
+    
     for (let i = 0; i < lines.length; i++) {
         const mensagem = lines[i];
         const enviado = await enviarMensagem(mensagem);
         if (!enviado) {
-            console.error(":x: Falha ao enviar mensagem \${i+1}. Parando execução.");
+            console.error(\`:x: Falha ao enviar mensagem \${i+1}. Parando execução.\`);
             break;
         }
+        
         if (i < lines.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, ${tempoEnvio}));
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await esperarResposta();
+            console.log(\`:stopwatch: Aguardando 5 segundos antes da próxima mensagem...\`);
+            await new Promise(resolve => setTimeout(resolve, 5000));
         }
     }
-    console.log(":tada: Todas as mensagens foram processadas!");
-})();
+    
+    console.log(\`:tada: Todas as mensagens foram processadas!\`);
+    return lines.length;
+}
+
+enviarScript(\`\${${JSON.stringify(mensagens).replace(/\\n/g, '\\n')}}\`).then(total => {
+    console.log(\`:sparkles: Script finalizado! \${total} mensagens foram enviadas.\`);
+}).catch(erro => {
+    console.error(\`:x: Erro durante a execução: \${erro.message}\`);
+});
             `;
             document.getElementById("codigoGerado").textContent = scriptJS;
         }
