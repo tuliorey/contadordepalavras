@@ -40,10 +40,10 @@ Espero que esteja tendo um ótimo dia!</textarea>
             let plataforma = document.getElementById("plataforma").value;
             let tempoEnvio = document.getElementById("tempo").value;
             let mensagens = document.getElementById("mensagens").value
-                .trim()
-                .split("\n")
-                .map(m => m.trim().replace(/"/g, "")) // Remove apenas aspas duplas, mantém apóstrofos
-                .filter(m => m !== "");
+    .trim()
+    .split("\n")
+    .map(m => m.trim().replace(/"/g, "").replace(/\.\.\./g, " 98aguisdas "))
+    .filter(m => m !== "");
 
             let scriptJS = "";
 
