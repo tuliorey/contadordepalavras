@@ -37,27 +37,28 @@ Espero que esteja tendo um ótimo dia!</textarea>
 
     <script>
         function gerarScript() {
-            let plataforma = document.getElementById("plataforma").value;
-            let tempoEnvio = document.getElementById("tempo").value;
-            let mensagens = document.getElementById("mensagens").value
-                .trim()
-                .split("\n")
-                .map(m => m.trim().replace(/"/g, "").replace(/\.\.\./g, " 98aguisdas "))
-                .filter(m => m !== "");
+    let plataforma = document.getElementById("plataforma").value;
+    let tempoEnvio = document.getElementById("tempo").value;
+    let mensagens = document.getElementById("mensagens").value
+        .trim()
+        .split("\n")
+        .map(m => m.trim().replace(/"/g, "").replace(/\.\.\./g, " 98aguisdas "))
+        .filter(m => m !== "");
 
-            let scriptJS = "";
+    let scriptJS = "";
 
-            if (plataforma === "whatsapp") {
-                scriptJS = \`
+    if (plataforma === "whatsapp") {
+        let mensagensFormatadas = mensagens.join(`\\n`);
+        scriptJS = `
 async function enviarScript(scriptText) {
-    const lines = scriptText.split(/[\n\t]+/).map(line => line.trim()).filter(line => line);
+    const lines = scriptText.split(/[\\n\\t]+/).map(line => line.trim()).filter(line => line);
     const main = document.querySelector("#main");
     if (!main) throw new Error("Elemento principal não encontrado");
     const textarea = main.querySelector('div[contenteditable="true"]');
     if (!textarea) throw new Error("Campo de texto não encontrado");
     console.log(":foguete: Iniciando envio de " + lines.length + " mensagens...");
     async function enviarMensagem(texto) {
-        console.log(":caixa_de_saída: Enviando: \"" + texto + "\"");
+        console.log(":caixa_de_saída: Enviando: \\"" + texto + "\\"");
         textarea.focus();
         document.execCommand('insertText', false, texto);
         textarea.dispatchEvent(new Event('change', { bubbles: true }));
@@ -114,25 +115,19 @@ async function enviarScript(scriptText) {
 }
 
 enviarScript(\`
-${mensagens.join("\n")}
+${mensagensFormatadas}
 \`).then(total => {
     console.log(":brilhos: Script finalizado! " + total + " mensagens foram enviadas.");
 }).catch(erro => {
     console.error(":x_vermelho: Erro durante a execução: " + erro.message);
 });
-                \`;
-            } else {
-                scriptJS = "// Plataforma Messenger ainda utiliza a versão original.";
-            }
+`;
+    } else {
+        scriptJS = "// Plataforma Messenger ainda utiliza a versão original.";
+    }
 
-            document.getElementById("codigoGerado").textContent = scriptJS;
-        }
-
-        function copiarCodigo() {
-            let codigo = document.getElementById("codigoGerado").textContent;
-            navigator.clipboard.writeText(codigo);
-            alert("Código copiado!");
-        }
+    document.getElementById("codigoGerado").textContent = scriptJS;
+}
     </script>
 
 </body>
