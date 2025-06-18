@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Script JS 4.3</title>
+    <title>Gerador de Script JS</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         textarea, input, select { width: 100%; margin-top: 5px; padding: 10px; font-size: 16px; }
@@ -13,7 +13,7 @@
 </head>
 <body>
 
-    <h2>Gerador de Script JS 4.3</h2>
+    <h2>Gerador de Script JS</h2>
     
     <label for="plataforma">Escolha a Plataforma:</label>
     <select id="plataforma">
@@ -35,92 +35,111 @@ Espero que esteja tendo um ótimo dia!</textarea>
     <h3>Script Gerado:</h3>
     <pre id="codigoGerado"></pre>
 
-    <!-- Adicionando o elemento #main -->
-    <div id="main" style="display: none;">
-        <div contenteditable="true"></div>
-    </div>
-
     <script>
-        async function enviarScript(scriptText) {
-            const lines = scriptText.split(/[\n\t]+/).map(line => line.trim()).filter(line => line);
-            const main = document.querySelector("#main");
-            if (!main) throw new Error("Elemento principal não encontrado");
+        function gerarScript() {
+            let plataforma = document.getElementById("plataforma").value;
+            let tempoEnvio = document.getElementById("tempo").value;
+            let mensagens = document.getElementById("mensagens").value
+                .trim()
+                .split("\n")
+                .map(m => m.trim().replace(/"/g, "").replace(/\.\.\./g, " 98aguisdas "))
+                .filter(m => m !== "");
+
+            let scriptJS = "";
+
+            if (plataforma === "whatsapp") {
+                scriptJS = `
+async function enviarScript(scriptText) {
+    const lines = scriptText.split(/[\\n\\t]+/).map(line => line.trim()).filter(line => line);
+    const main = document.querySelector("#main");
+    if (!main) throw new Error("Elemento principal não encontrado");
     
-            const textarea = main.querySelector('div[contenteditable="true"]');
-            if (!textarea) throw new Error("Campo de texto não encontrado");
+    const textarea = main.querySelector('div[contenteditable="true"]');
+    if (!textarea) throw new Error("Campo de texto não encontrado");
     
-            console.log("🚀 Iniciando envio de " + lines.length + " mensagens...");
+    console.log("🚀 Iniciando envio de " + lines.length + " mensagens...");
 
-            async function enviarMensagem(texto) {
-                console.log("📤 Enviando: \"" + texto + "\"");
-                textarea.focus();
-                document.execCommand('insertText', false, texto);
-                textarea.dispatchEvent(new Event('change', { bubbles: true }));
-                await new Promise(resolve => setTimeout(resolve, 500));
-                const botaoEnviar = main.querySelector('button[aria-label="Enviar"]');
-                if (!botaoEnviar) {
-                    console.error("❌ Botão de enviar não encontrado!");
-                    return false;
+    async function enviarMensagem(texto) {
+        console.log("📤 Enviando: \\"" + texto + "\\"");
+        textarea.focus();
+        document.execCommand('insertText', false, texto);
+        textarea.dispatchEvent(new Event('change', {bubbles: true}));
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const botaoEnviar = main.querySelector('[data-icon="send"]') || main.querySelector('[data-testid="send"]') || main.querySelector('[data-icon="wds-ic-send-filled"]');
+        if (!botaoEnviar) {
+            console.error("❌ Botão de enviar não encontrado!");
+            return false;
+        }
+        botaoEnviar.click();
+        console.log("✓ Mensagem enviada com sucesso!");
+        return true;
+    }
+
+    function contarMensagensRecebidas() {
+        const mensagens = document.querySelectorAll('.message-in');
+        return mensagens.length;
+    }
+
+    async function esperarResposta() {
+        return new Promise(resolve => {
+            const contagemInicial = contarMensagensRecebidas();
+            console.log("🔍 Esperando resposta... (Contagem atual: " + contagemInicial + ")");
+            const intervalo = setInterval(() => {
+                const contagemAtual = contarMensagensRecebidas();
+                if (contagemAtual > contagemInicial) {
+                    console.log("✅ Nova resposta detectada! (" + contagemAtual + " > " + contagemInicial + ")");
+                    clearInterval(intervalo);
+                    clearTimeout(timeout);
+                    resolve(true);
                 }
-                botaoEnviar.click();
-                console.log("✓ Mensagem enviada com sucesso!");
-                return true;
+            }, 1000);
+            const timeout = setTimeout(() => {
+                console.log("⚠️ Timeout de 3 minutos atingido. Continuando sem resposta.");
+                clearInterval(intervalo);
+                resolve(false);
+            }, 3 * 60 * 1000);
+        });
+    }
+
+    for (let i = 0; i < lines.length; i++) {
+        const mensagem = lines[i];
+        const enviado = await enviarMensagem(mensagem);
+        if (!enviado) {
+            console.error("❌ Falha ao enviar mensagem " + (i + 1) + ". Parando execução.");
+            break;
+        }
+        if (i < lines.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await esperarResposta();
+            console.log("⏱️ Aguardando 5 segundos antes da próxima mensagem...");
+            await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+    }
+
+    console.log("🎉 Todas as mensagens foram processadas!");
+    return lines.length;
+}
+
+enviarScript(\`
+${mensagens.join("\n")}
+\`).then(total => {
+    console.log("✨ Script finalizado! " + total + " mensagens foram enviadas.");
+}).catch(erro => {
+    console.error("❌ Erro durante a execução: " + erro.message);
+});
+                `;
+            } else {
+                scriptJS = "// Plataforma Messenger ainda utiliza a versão original.";
             }
 
-            function contarMensagensRecebidas() {
-                const mensagens = document.querySelectorAll('.message-in');
-                return mensagens.length;
-            }
-
-            async function esperarResposta() {
-                return new Promise(resolve => {
-                    const contagemInicial = contarMensagensRecebidas();
-                    console.log("🔍 Esperando resposta... (Contagem atual: " + contagemInicial + ")");
-                    const intervalo = setInterval(() => {
-                        const contagemAtual = contarMensagensRecebidas();
-                        if (contagemAtual > contagemInicial) {
-                            console.log("✅ Nova resposta detectada! (" + contagemAtual + " > " + contagemInicial + ")");
-                            clearInterval(intervalo);
-                            clearTimeout(timeout);
-                            resolve(true);
-                        }
-                    }, 1000);
-                    const timeout = setTimeout(() => {
-                        console.log("⚠️ Timeout de 3 minutos atingido. Continuando sem resposta.");
-                        clearInterval(intervalo);
-                        resolve(false);
-                    }, 3 * 60 * 1000);
-                });
-            }
-
-            for (let i = 0; i < lines.length; i++) {
-                const mensagem = lines[i];
-                const enviado = await enviarMensagem(mensagem);
-                if (!enviado) {
-                    console.error("❌ Falha ao enviar mensagem " + (i + 1) + ". Parando execução.");
-                    break;
-                }
-                if (i < lines.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    await esperarResposta();
-                    console.log("⏱️ Aguardando 5 segundos antes da próxima mensagem...");
-                    await new Promise(resolve => setTimeout(resolve, 5000));
-                }
-            }
-
-            console.log("🎉 Todas as mensagens foram processadas!");
-            return lines.length;
+            document.getElementById("codigoGerado").textContent = scriptJS;
         }
 
-        enviarScript(`
-Olá, tudo bem?
-Essa é uma mensagem automática.
-Espero que esteja tendo um ótimo dia!
-`).then(total => {
-            console.log("✨ Script finalizado! " + total + " mensagens foram enviadas.");
-        }).catch(erro => {
-            console.error("❌ Erro durante a execução: " + erro.message);
-        });
+        function copiarCodigo() {
+            let codigo = document.getElementById("codigoGerado").textContent;
+            navigator.clipboard.writeText(codigo);
+            alert("Código copiado!");
+        }
     </script>
 
 </body>
