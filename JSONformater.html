@@ -2,11 +2,11 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Sheets → JSON Formatter</title>
+  <title>Formatador de JSON</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f5f5f5;
+      background: #f4f6f8;
       padding: 20px;
     }
 
@@ -18,86 +18,86 @@
       width: 100%;
       min-height: 180px;
       margin-bottom: 15px;
-      padding: 10px;
+      padding: 12px;
       font-family: monospace;
       font-size: 14px;
-      border-radius: 4px;
+      border-radius: 6px;
       border: 1px solid #ccc;
+      resize: vertical;
     }
 
     button {
       padding: 10px 16px;
       font-size: 14px;
-      cursor: pointer;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
+      cursor: pointer;
       margin-right: 10px;
     }
 
-    .convert {
-      background-color: #1976d2;
-      color: white;
+    .format {
+      background: #1976d2;
+      color: #fff;
     }
 
     .copy {
-      background-color: #388e3c;
-      color: white;
+      background: #388e3c;
+      color: #fff;
     }
 
     .error {
-      color: red;
+      color: #c62828;
       margin-top: 10px;
+      white-space: pre-wrap;
     }
   </style>
 </head>
 <body>
 
-  <h1>Google Sheets → JSON Formatado</h1>
+  <h1>Formatador de JSON</h1>
+  <p>Cole aqui o JSON copiado da planilha:</p>
 
-  <p>Cole aqui os dados copiados do Google Sheets:</p>
-  <textarea id="input" placeholder="Cole os dados da planilha aqui..."></textarea>
+  <textarea id="input" placeholder='{"ct":"123",...}, {"ct":"456",...}'></textarea>
 
-  <button class="convert" onclick="convertToJSON()">Converter para JSON</button>
-  <button class="copy" onclick="copyJSON()">Copiar JSON</button>
+  <button class="format" onclick="formatJSON()">Formatar</button>
+  <button class="copy" onclick="copyJSON()">Copiar</button>
 
   <p>JSON formatado:</p>
-  <textarea id="output" placeholder="JSON aparecerá aqui..."></textarea>
+  <textarea id="output" placeholder="JSON formatado aparecerá aqui"></textarea>
 
-  <div class="error" id="error"></div>
+  <div id="error" class="error"></div>
 
   <script>
-    function convertToJSON() {
+    function formatJSON() {
       const input = document.getElementById('input').value.trim();
       const errorDiv = document.getElementById('error');
       errorDiv.textContent = '';
 
       if (!input) {
-        errorDiv.textContent = 'Cole algum conteúdo da planilha.';
+        errorDiv.textContent = 'Cole algum JSON para formatar.';
         return;
       }
 
       try {
-        const rows = input.split('\n').map(row => row.split('\t'));
-        const headers = rows.shift();
+        // Garante que vire um array válido
+        const wrapped = input.startsWith('[')
+          ? input
+          : `[${input}]`;
 
-        const json = rows.map(row => {
-          const obj = {};
-          headers.forEach((header, index) => {
-            obj[header] = row[index] ?? '';
-          });
-          return obj;
-        });
+        const parsed = JSON.parse(wrapped);
 
         document.getElementById('output').value =
-          JSON.stringify(json, null, 2);
-
+          JSON.stringify(parsed, null, 2);
       } catch (err) {
-        errorDiv.textContent = 'Erro ao converter os dados.';
+        errorDiv.textContent =
+          'JSON inválido. Verifique vírgulas, aspas ou chaves.\n\n' +
+          err.message;
       }
     }
 
     function copyJSON() {
       const output = document.getElementById('output');
+      if (!output.value) return;
       output.select();
       document.execCommand('copy');
     }
