@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sheets → JSON Formatter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      margin-bottom: 15px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 14px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 10px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      margin-right: 10px;
+    }
+
+    .convert {
+      background-color: #1976d2;
+      color: white;
+    }
+
+    .copy {
+      background-color: #388e3c;
+      color: white;
+    }
+
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Google Sheets → JSON Formatado</h1>
+
+  <p>Cole aqui os dados copiados do Google Sheets:</p>
+  <textarea id="input" placeholder="Cole os dados da planilha aqui..."></textarea>
+
+  <button class="convert" onclick="convertToJSON()">Converter para JSON</button>
+  <button class="copy" onclick="copyJSON()">Copiar JSON</button>
+
+  <p>JSON formatado:</p>
+  <textarea id="output" placeholder="JSON aparecerá aqui..."></textarea>
+
+  <div class="error" id="error"></div>
+
+  <script>
+    function convertToJSON() {
+      const input = document.getElementById('input').value.trim();
+      const errorDiv = document.getElementById('error');
+      errorDiv.textContent = '';
+
+      if (!input) {
+        errorDiv.textContent = 'Cole algum conteúdo da planilha.';
+        return;
+      }
+
+      try {
+        const rows = input.split('\n').map(row => row.split('\t'));
+        const headers = rows.shift();
+
+        const json = rows.map(row => {
+          const obj = {};
+          headers.forEach((header, index) => {
+            obj[header] = row[index] ?? '';
+          });
+          return obj;
+        });
+
+        document.getElementById('output').value =
+          JSON.stringify(json, null, 2);
+
+      } catch (err) {
+        errorDiv.textContent = 'Erro ao converter os dados.';
+      }
+    }
+
+    function copyJSON() {
+      const output = document.getElementById('output');
+      output.select();
+      document.execCommand('copy');
+    }
+  </script>
+
+</body>
+</html>
