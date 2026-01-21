@@ -1,44 +1,188 @@
-<script>
-  function formatJSON() {
-    const input = document.getElementById('input').value.trim();
-    const errorDiv = document.getElementById('error');
-    errorDiv.textContent = '';
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>JSON → Excel (.xlsx) • Offline</title>
 
-    if (!input) {
-      errorDiv.textContent = 'Cole algum JSON para formatar.';
-      return;
+  <!-- Bloqueia conexões externas. (Ideal para rodar via servidor/localhost; em file:// pode variar por navegador) -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; connect-src 'none'; img-src 'self' data:; style-src 'self' 'unsafe-inline'">
+
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 24px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
+    textarea { width: 100%; min-height: 240px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; padding: 12px; }
+    input[type="text"] { padding: 10px; width: 260px; }
+    button { padding: 10px 14px; cursor: pointer; }
+    .hint { color: #666; font-size: 13px; }
+    .err { color: #b00020; white-space: pre-wrap; }
+    .ok { color: #1b5e20; }
+    .box { border: 1px solid #ddd; border-radius: 10px; padding: 12px; }
+    code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h2>JSON → Excel (.xlsx) (100% local)</h2>
+
+  <div class="box">
+    <div class="row">
+      <input id="fileName" type="text" value="export" placeholder="nome do arquivo" />
+      <input id="sheetName" type="text" value="dados" placeholder="nome da aba" />
+      <input id="jsonFile" type="file" accept=".json,application/json" />
+      <button id="btnExample">Exemplo</button>
+      <button id="btnDownload">Baixar Excel</button>
+    </div>
+
+    <div class="hint">
+      Tudo roda no seu navegador e não envia dados pra fora.
+      Para funcionar offline, coloque <code>xlsx.full.min.js</code> na mesma pasta deste HTML.
+      <br/>
+      Aceita: <b>array de objetos</b> (ex.: [{...},{...}]) ou <b>objeto com uma lista dentro</b> (ele pega a primeira lista encontrada).
+      Campos aninhados viram colunas com “dot notation” (ex.: user.endereco.cidade).
+    </div>
+
+    <textarea id="jsonInput" placeholder='Cole aqui seu JSON (ex.: [{"id":1,"nome":"Ana"}])'></textarea>
+
+    <div id="msg" class="hint"></div>
+    <div id="err" class="err"></div>
+  </div>
+
+  <!-- IMPORTANTE: arquivo local (sem CDN) -->
+  <!-- Baixe o xlsx.full.min.js e coloque ao lado deste HTML -->
+  <script src="./xlsx.full.min.js"></script>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function setMsg(text, ok = true) {
+      $("msg").className = ok ? "hint ok" : "hint";
+      $("msg").textContent = text || "";
+    }
+    function setErr(text) {
+      $("err").textContent = text || "";
     }
 
-    try {
-      // Se já for um objeto JSON válido
-      if (input.startsWith('{') && input.endsWith('}')) {
-        const parsed = JSON.parse(input);
-        document.getElementById('output').value =
-          JSON.stringify(parsed, null, 2);
-        return;
+    // Achata objetos aninhados para colunas "a.b.c"
+    function flatten(obj, prefix = "", out = {}) {
+      if (obj == null) return out;
+
+      if (obj instanceof Date) {
+        if (prefix) out[prefix] = obj.toISOString();
+        return out;
       }
 
-      // Caso sejam múltiplos objetos separados por vírgula
-      const wrapped = `[${input}]`;
-      const parsedArray = JSON.parse(wrapped);
+      for (const [k, v] of Object.entries(obj)) {
+        const key = prefix ? `${prefix}.${k}` : k;
 
-      // Mescla tudo em um único objeto
-      const merged = Object.assign({}, ...parsedArray);
-
-      document.getElementById('output').value =
-        JSON.stringify(merged, null, 2);
-
-    } catch (err) {
-      errorDiv.textContent =
-        'JSON inválido. Verifique aspas, vírgulas ou chaves.\n\n' +
-        err.message;
+        if (v && typeof v === "object" && !Array.isArray(v)) {
+          flatten(v, key, out);
+        } else if (Array.isArray(v)) {
+          // array vira string (pra não quebrar a tabela)
+          out[key] = JSON.stringify(v);
+        } else {
+          out[key] = v;
+        }
+      }
+      return out;
     }
-  }
 
-  function copyJSON() {
-    const output = document.getElementById('output');
-    if (!output.value) return;
-    output.select();
-    document.execCommand('copy');
-  }
-</script>
+    // Encontra a primeira lista dentro de um objeto (fallback)
+    function findFirstArray(value) {
+      if (Array.isArray(value)) return value;
+      if (value && typeof value === "object") {
+        for (const v of Object.values(value)) {
+          const found = findFirstArray(v);
+          if (Array.isArray(found)) return found;
+        }
+      }
+      return null;
+    }
+
+    function parseInputJSON(text) {
+      const parsed = JSON.parse(text);
+
+      // Caso comum: array
+      if (Array.isArray(parsed)) return parsed;
+
+      // Objeto com lista dentro
+      const arr = findFirstArray(parsed);
+      if (Array.isArray(arr)) return arr;
+
+      // Objeto simples: vira uma linha
+      if (parsed && typeof parsed === "object") return [parsed];
+
+      throw new Error("JSON inválido: precisa ser um objeto ou uma lista.");
+    }
+
+    function toRows(data) {
+      return data.map((item) => {
+        if (item == null) return {};
+        if (typeof item !== "object") return { value: item };
+        if (Array.isArray(item)) return { value: JSON.stringify(item) };
+        return flatten(item);
+      });
+    }
+
+    function downloadXlsx(rows, fileName = "export", sheetName = "dados") {
+      // garante que a lib carregou
+      if (typeof XLSX === "undefined") {
+        throw new Error(
+          "Biblioteca XLSX não carregou. Confirme que o arquivo 'xlsx.full.min.js' está na mesma pasta do HTML."
+        );
+      }
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(rows);
+      XLSX.utils.book_append_sheet(wb, ws, sheetName || "dados");
+
+      const safeName = (fileName || "export").replace(/[\\/:*?"<>|]+/g, "-");
+      XLSX.writeFile(wb, `${safeName}.xlsx`);
+    }
+
+    $("btnDownload").addEventListener("click", () => {
+      setErr("");
+      try {
+        const text = $("jsonInput").value.trim();
+        if (!text) throw new Error("Cole um JSON no textarea ou selecione um arquivo .json.");
+
+        const data = parseInputJSON(text);
+        const rows = toRows(data);
+
+        if (!rows.length) throw new Error("Não encontrei dados para exportar.");
+        setMsg(`Gerando Excel com ${rows.length} linha(s)...`);
+
+        downloadXlsx(rows, $("fileName").value, $("sheetName").value);
+        setMsg("Pronto! Arquivo baixado ✅");
+      } catch (e) {
+        setMsg("");
+        setErr(e?.message || String(e));
+      }
+    });
+
+    $("btnExample").addEventListener("click", () => {
+      $("jsonInput").value = JSON.stringify([
+        { id: 1, nome: "Ana", user: { email: "ana@test.com", endereco: { cidade: "SP" } }, tags: ["a","b"] },
+        { id: 2, nome: "Bruno", user: { email: "bruno@test.com", endereco: { cidade: "RJ" } }, ativo: true }
+      ], null, 2);
+      setErr("");
+      setMsg("Exemplo preenchido. Clique em “Baixar Excel”.");
+    });
+
+    $("jsonFile").addEventListener("change", async (ev) => {
+      setErr("");
+      const file = ev.target.files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        $("jsonInput").value = text;
+        setMsg(`Arquivo carregado: ${file.name}`);
+      } catch (e) {
+        setMsg("");
+        setErr("Falha ao ler o arquivo .json");
+      }
+    });
+  </script>
+</body>
+</html>
