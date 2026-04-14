@@ -2,63 +2,209 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Comparador de Texto Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparador de Texto Lado a Lado</title>
     <style>
-        body { font-family: sans-serif; background: #f4f4f9; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        textarea { width: 100%; height: 150px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; resize: vertical; }
-        button { grid-column: span 2; padding: 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:hover { background: #0056b3; }
-        #resultado { margin-top: 20px; padding: 15px; border: 1px solid #ccc; background: #fff; min-height: 50px; white-space: pre-wrap; line-height: 1.6; }
-        
-        /* Estilos do Diff */
-        .removido { background-color: #f8d7da; color: #721c24; text-decoration: line-through; padding: 2px; }
-        .adicionado { background-color: #d4edda; color: #155724; padding: 2px; border-bottom: 2px solid #28a745; }
+        /* Estilos Gerais */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        h2 { text-align: center; color: #444; margin-top: 0; }
+        p.instrucao { text-align: center; color: #666; margin-bottom: 25px; }
+
+        /* Area de Entrada (Textareas) */
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel-entrada { display: flex; flex-direction: column; }
+        label { font-weight: bold; margin-bottom: 8px; color: #555; }
+
+        textarea {
+            width: 100%;
+            height: 180px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.2s;
+            box-sizing: border-box; /* Garante que padding não aumente o tamanho */
+        }
+
+        textarea:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        /* Botão */
+        .btn-container { text-align: center; margin-bottom: 30px; }
+
+        button {
+            padding: 12px 30px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        button:hover { background-color: #0056b3; }
+        button:active { transform: translateY(1px); }
+
+        /* Área de Resultado (Visualização) */
+        .result-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            display: none; /* Escondido inicialmente */
+        }
+
+        .panel-resultado {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background: #fafafa;
+            overflow: hidden;
+        }
+
+        .titulo-resultado {
+            background-color: #eee;
+            padding: 10px 15px;
+            font-weight: bold;
+            border-bottom: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        .conteudo-resultado {
+            padding: 15px;
+            min-height: 180px;
+            white-space: pre-wrap; /* Mantém quebras de linha e espaços */
+            word-wrap: break-word; /* Quebra palavras longas */
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* O ESTILO DO DESTAQUE (A Mágica) */
+        .diferenca-destaque {
+            background-color: #fff3cd; /* Amarelo suave de fundo */
+            color: #856404;            /* Texto marrom escuro para contraste */
+            border-bottom: 2px solid #ffeeba; /* Linha amarela inferior opcional */
+            padding: 2px 0;
+            border-radius: 2px;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Comparador de Textos</h2>
-    <div class="grid">
-        <textarea id="texto1" placeholder="Cole o texto original aqui..."></textarea>
-        <textarea id="texto2" placeholder="Cole o texto modificado aqui..."></textarea>
-        <button onclick="comparar()">Comparar Diferenças</button>
+    <h2>Comparador de Texto Lado a Lado</h2>
+    <p class="instrucao">Cole o texto original e a versão modificada abaixo para destacar as mudanças.</p>
+
+    <div class="input-group">
+        <div class="panel-entrada">
+            <label for="textoOriginal">Texto Original:</label>
+            <textarea id="textoOriginal" placeholder="Digite ou cole o texto base..."></textarea>
+        </div>
+        <div class="panel-entrada">
+            <label for="textoModificado">Texto Modificado:</label>
+            <textarea id="textoModificado" placeholder="Digite ou cole a versão alterada..."></textarea>
+        </div>
     </div>
 
-    <h3>Resultado:</h3>
-    <div id="resultado">As diferenças aparecerão aqui...</div>
+    <div class="btn-container">
+        <button onclick="processarComparacao()">Comparar e Destacar</button>
+    </div>
+
+    <div class="result-group" id="areaResultado">
+        <div class="panel-resultado">
+            <div class="titulo-resultado">Original (Referência)</div>
+            <div id="resOriginal" class="conteudo-resultado"></div>
+        </div>
+        <div class="panel-resultado">
+            <div class="titulo-resultado">Modificado (Com Destaques)</div>
+            <div id="resModificado" class="conteudo-resultado"></div>
+        </div>
+    </div>
 </div>
 
 <script>
-function comparar() {
-    const t1 = document.getElementById('texto1').value.split(/\s+/);
-    const t2 = document.getElementById('texto2').value.split(/\s+/);
-    const display = document.getElementById('resultado');
-    
-    // Usando um Set para identificação rápida (lógica simplificada)
-    let output = "";
-    
-    // Esta lógica percorre o texto 2 e verifica o que é novo em relação ao 1
-    // Para um comparador profissional, recomenda-se bibliotecas como 'diff'
-    const maxLength = Math.max(t1.length, t2.length);
-    
-    for (let i = 0; i < maxLength; i++) {
-        if (t1[i] === t2[i]) {
-            output += (t1[i] || "") + " ";
-        } else {
-            if (t1[i]) {
-                output += `<span class="removido">${t1[i]}</span> `;
-            }
-            if (t2[i]) {
-                output += `<span class="adicionado">${t2[i]}</span> `;
-            }
+    function processarComparacao() {
+        // 1. Capturar os inputs
+        const originalStr = document.getElementById('textoOriginal').value;
+        const modificadoStr = document.getElementById('textoModificado').value;
+        
+        // Elementos de exibição
+        const areaResultado = document.getElementById('areaResultado');
+        const displayOriginal = document.getElementById('resOriginal');
+        const displayModificado = document.getElementById('resModificado');
+
+        // Se ambos estiverem vazios, não faz nada
+        if (!originalStr && !modificadoStr) {
+            areaResultado.style.display = 'none';
+            return;
         }
+
+        // 2. Preparar os textos (exibir o original como está)
+        displayOriginal.textContent = originalStr;
+
+        // 3. Executar a lógica de comparação (palavra por palavra)
+        // Usamos regex para separar por palavras mantendo pontuação grudada
+        const originalWords = originalStr.split(/(\s+)/); // Mantém os espaços como elementos
+        const modificadoWords = modificadoStr.split(/(\s+)/);
+
+        // Usamos um Set para busca rápida das palavras que existem no original
+        // Convertemos para Minusculo para comparação não-case-sensitive (opcional)
+        const originalSet = new Set(originalStr.split(/\s+/).map(w => w.toLowerCase()));
+
+        let htmlModificado = "";
+
+        // Percorrer o texto modificado e marcar o que não estava no original
+        modificadoWords.forEach(word => {
+            // Se for apenas espaço, adiciona direto
+            if (word.trim() === "") {
+                htmlModificado += word;
+                return;
+            }
+
+            // Normaliza para comparação
+            const wordNormalized = word.toLowerCase();
+
+            // LÓGICA: Se a palavra NÃO existe no Set original, ela é DIFERENTE (Nova ou Alterada)
+            if (!originalSet.has(wordNormalized)) {
+                // Envolvemos a palavra em um span com a classe de destaque
+                htmlModificado += `<span class="diferenca-destaque">${word}</span>`;
+            } else {
+                // Palavra igual, adiciona texto puro
+                htmlModificado += word;
+            }
+        });
+
+        // 4. Exibir o resultado
+        displayModificado.innerHTML = htmlModificado;
+        areaResultado.style.display = 'grid'; // Mostra a área de resultado
     }
-    
-    display.innerHTML = output || "Nenhuma diferença encontrada.";
-}
 </script>
 
 </body>
