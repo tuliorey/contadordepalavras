@@ -6,23 +6,27 @@
     <title>Gerador de Script JS</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
-        textarea, input, select { width: 100%; margin-top: 5px; padding: 10px; font-size: 16px; }
+        textarea, input, select { width: 100%; margin-top: 5px; padding: 10px; font-size: 16px; box-sizing: border-box; }
         button { margin-top: 10px; padding: 10px; font-size: 16px; cursor: pointer; }
         pre { background: #f4f4f4; padding: 10px; white-space: pre-wrap; word-wrap: break-word; }
+        label { font-weight: bold; margin-top: 12px; display: block; }
     </style>
 </head>
 <body>
 
     <h2>Gerador de Script JS</h2>
-    
+
     <label for="plataforma">Escolha a Plataforma:</label>
     <select id="plataforma">
         <option value="whatsapp">WhatsApp</option>
         <option value="messenger">Messenger</option>
     </select>
 
-    <label for="tempo">Tempo entre mensagens (ms):</label>
-    <input type="number" id="tempo" value="20000">
+    <label for="tempoMaxResposta">Tempo máximo de espera por resposta (ms):</label>
+    <input type="number" id="tempoMaxResposta" value="30000">
+
+    <label for="tempoHumano">Pausa "humana" após a resposta chegar (ms):</label>
+    <input type="number" id="tempoHumano" value="1500">
 
     <label for="mensagens">Mensagens (uma por linha):</label>
     <textarea id="mensagens" rows="5">Olá, tudo bem?
@@ -38,7 +42,8 @@ Espero que esteja tendo um ótimo dia!</textarea>
     <script>
         function gerarScript() {
             let plataforma = document.getElementById("plataforma").value;
-            let tempoEnvio = document.getElementById("tempo").value;
+            let tempoMaxResposta = document.getElementById("tempoMaxResposta").value;
+            let tempoHumano = document.getElementById("tempoHumano").value;
             let mensagens = document.getElementById("mensagens").value
                 .trim()
                 .split("\n")
@@ -52,80 +57,124 @@ Espero que esteja tendo um ótimo dia!</textarea>
 async function enviarScript(scriptText) {
     const lines = scriptText.split(/[\\n\\t]+/).map(line => line.trim()).filter(line => line);
     const main = document.querySelector("#main");
-    if (!main) throw new Error("Elemento principal não encontrado");
-    
-    const textarea = main.querySelector('div[contenteditable="true"]');
-    if (!textarea) throw new Error("Campo de texto não encontrado");
-    
-    console.log("🚀 Iniciando envio de " + lines.length + " mensagens...");
+    if (!main) throw new Error("Elemento principal (#main) não encontrado. Certifique-se de que está com uma conversa aberta!");
 
+    const textarea = main.querySelector('div[contenteditable="true"]');
+    if (!textarea) throw new Error("Campo de texto não encontrado no chat.");
+
+    console.log("🤖 MODO ULTRA-INTELIGENTE: Iniciando fluxo de " + lines.length + " mensagens...");
+
+    // Função interna para disparar a mensagem
     async function enviarMensagem(texto) {
-        console.log("📤 Enviando: \\"" + texto + "\\"");
         textarea.focus();
         document.execCommand('insertText', false, texto);
-        textarea.dispatchEvent(new Event('change', {bubbles: true}));
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const botaoEnviar = main.querySelector('[data-icon="send"]') || main.querySelector('[data-testid="send"]') || main.querySelector('[data-icon="wds-ic-send-filled"]');
+        textarea.dispatchEvent(new Event('change', { bubbles: true }));
+
+        // Micro-pausa técnica para o sistema processar a digitação
+        await new Promise(resolve => setTimeout(resolve, 250));
+
+        // Busca o botão de enviar usando múltiplos seletores conhecidos
+        const botaoEnviar = main.querySelector('[data-icon="send"]') ||
+                           main.querySelector('[data-testid="send"]') ||
+                           main.querySelector('[data-icon="wds-ic-send-filled"]') ||
+                           main.querySelector('button:has([data-icon="send"])');
+
         if (!botaoEnviar) {
             console.error("❌ Botão de enviar não encontrado!");
             return false;
         }
         botaoEnviar.click();
-        console.log("✓ Mensagem enviada com sucesso!");
+        console.log("📤 Enviada: \\"" + texto + "\\"");
         return true;
     }
 
-    function contarMensagensRecebidas() {
-        const mensagens = document.querySelectorAll('.message-in');
-        return mensagens.length;
-    }
-
+    // Função com detecção por eventos (MutationObserver) em vez de polling fixo
     async function esperarResposta() {
         return new Promise(resolve => {
-            const contagemInicial = contarMensagensRecebidas();
-            console.log("🔍 Esperando resposta... (Contagem atual: " + contagemInicial + ")");
-            const intervalo = setInterval(() => {
-                const contagemAtual = contarMensagensRecebidas();
-                if (contagemAtual > contagemInicial) {
-                    console.log("✅ Nova resposta detectada! (" + contagemAtual + " > " + contagemInicial + ")");
-                    clearInterval(intervalo);
-                    clearTimeout(timeout);
-                    resolve(true);
-                }
-            }, 1000);
+            // Localiza a área de rolagem das mensagens de forma resiliente
+            const painelMensagens = main.querySelector('[data-testid="conversation-panel-messages"]') ||
+                                   main.querySelector('div[role="region"]') ||
+                                   main.querySelector('.copyable-area')?.firstElementChild;
+
+            if (!painelMensagens) {
+                console.warn("⚠️ Painel de mensagens não mapeado. Usando segurança: espera fixa de 5 segundos.");
+                setTimeout(() => resolve(false), 5000);
+                return;
+            }
+
+            console.log("🔍 Olhos abertos aguardando resposta (Máx " + (${tempoMaxResposta} / 1000) + "s)...");
+
+            // Teto máximo de espera configurado na interface
             const timeout = setTimeout(() => {
-                console.log("⚠️ Timeout de 3 minutos atingido. Continuando sem resposta.");
-                clearInterval(intervalo);
+                observer.disconnect();
+                console.log("⚠️ Tempo máximo esgotado. Forçando envio da próxima.");
                 resolve(false);
-            }, 3 * 60 * 1000);
+            }, ${tempoMaxResposta});
+
+            // O Observer "escuta" novos elementos injetados na tela
+            const observer = new MutationObserver((mutations) => {
+                for (const mutation of mutations) {
+                    if (mutation.addedNodes.length > 0) {
+                        for (const node of mutation.addedNodes) {
+                            if (node.nodeType === Node.ELEMENT_NODE) {
+                                // DETECÇÃO AVANÇADA: verifica classes CSS comuns ou a chave interna do WhatsApp (false_...)
+                                const ehMensagemRecebida = node.querySelector('.message-in') ||
+                                                           node.classList.contains('message-in') ||
+                                                           node.querySelector('[data-id^="false_"]') ||
+                                                           node.getAttribute('data-id')?.startsWith('false_');
+
+                                if (ehMensagemRecebida) {
+                                    console.log("⚡ Nova resposta identificada perfeitamente!");
+                                    observer.disconnect();
+                                    clearTimeout(timeout);
+                                    resolve(true);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Inicia o monitoramento da árvore de elementos do chat
+            observer.observe(painelMensagens, { childList: true, subtree: true });
         });
     }
 
+    // Loop de controle das mensagens
     for (let i = 0; i < lines.length; i++) {
         const mensagem = lines[i];
         const enviado = await enviarMensagem(mensagem);
+
         if (!enviado) {
-            console.error("❌ Falha ao enviar mensagem " + (i + 1) + ". Parando execução.");
+            console.error("❌ O fluxo quebrou porque uma mensagem falhou. Parando execução.");
             break;
         }
+
+        // Se ainda restam mensagens a serem enviadas, gerencia a espera
         if (i < lines.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Pausa curta para estabilizar a tela antes de ativar o radar
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            // Aguarda o cliente responder ou atingir o teto máximo
             await esperarResposta();
-            console.log("⏱️ Aguardando 5 segundos antes da próxima mensagem...");
-            await new Promise(resolve => setTimeout(resolve, 5000));
+
+            // Tempo "humano" de resposta para não disparar colado na resposta dele
+            console.log("⏱️ Preparando próxima mensagem em " + (${tempoHumano} / 1000) + " segundos...");
+            await new Promise(resolve => setTimeout(resolve, ${tempoHumano}));
         }
     }
 
-    console.log("🎉 Todas as mensagens foram processadas!");
+    console.log("🎉 Script finalizado com sucesso!");
     return lines.length;
 }
 
 enviarScript(\`
 ${mensagens.join("\n")}
 \`).then(total => {
-    console.log("✨ Script finalizado! " + total + " mensagens foram enviadas.");
+    console.log("✨ Processo concluído! Total de blocos de mensagens: " + total);
 }).catch(erro => {
-    console.error("❌ Erro durante a execução: " + erro.message);
+    console.error("❌ Erro crítico: " + erro.message);
 });
                 `;
             } else {
